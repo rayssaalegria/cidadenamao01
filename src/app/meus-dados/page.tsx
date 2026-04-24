@@ -21,6 +21,23 @@ function getTokenFromStorage() {
   }
 }
 
+function getTokenFromUrl() {
+  try {
+    const url = new URL(window.location.href);
+    return url.searchParams.get("sasiToken") || "";
+  } catch {
+    return "";
+  }
+}
+
+function persistToken(token: string) {
+  try {
+    localStorage.setItem("sasi-token", token);
+  } catch {
+    // ignore
+  }
+}
+
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
     <div className={styles.row}>
@@ -38,7 +55,10 @@ export default function MeusDadosPage() {
 
   // Recarrega toda vez que entrar na página (mount)
   useEffect(() => {
-    const t = getTokenFromStorage();
+    const urlToken = getTokenFromUrl();
+    if (urlToken) persistToken(urlToken);
+
+    const t = urlToken || getTokenFromStorage();
     setToken(t);
   }, []);
 
@@ -52,7 +72,9 @@ export default function MeusDadosPage() {
 
       if (!token) {
         setLoading(false);
-        setError("Não encontrei `sasi-token` no localStorage. Defina `localStorage.setItem('sasi-token', '...')`.");
+        setError(
+          "Não encontrei `sasi-token`. Passe `?sasiToken=...` na URL (recomendado para WebView de teste) ou defina `localStorage.setItem('sasi-token','...')`.",
+        );
         return;
       }
 
