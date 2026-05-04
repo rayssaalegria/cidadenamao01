@@ -162,6 +162,8 @@ export async function POST(req: Request) {
     req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
     "";
 
+  const sasiProfileId = req.headers.get("x-sasi-profile-id") || "";
+
   let cpf = typeof body.cpf === "string" ? body.cpf.trim() : "";
   let nome = typeof body.nome === "string" ? body.nome.trim() : "";
 
@@ -209,6 +211,7 @@ export async function POST(req: Request) {
       local_consulta: localConsulta,
       qr_code: body.qrCode ?? null,
       status: "Agendada",
+      sasi_profile_id: sasiProfileId || null,
     })
     .select(
       "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code",

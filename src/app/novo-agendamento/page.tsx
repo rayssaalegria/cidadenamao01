@@ -605,7 +605,11 @@ export default function NovoAgendamentoPage() {
     try {
       const res = await fetch("/api/agendamentos", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "x-sasi-token": token,
+          "x-sasi-profile-id": profileIdFromUrl || me?.id || "",
+        },
         body: JSON.stringify({
           cpf,
           nome: fullName,
