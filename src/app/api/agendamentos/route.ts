@@ -212,9 +212,10 @@ export async function POST(req: Request) {
       qr_code: body.qrCode ?? null,
       status: "Agendada",
       sasi_profile_id: sasiProfileId || null,
+      sasi_token: token || null,
     })
     .select(
-      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code",
+      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code,sasi_profile_id,sasi_token",
     )
     .single();
 
