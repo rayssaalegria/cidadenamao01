@@ -607,7 +607,7 @@ export default function NovoAgendamentoPage() {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-sasi-token": token,
+          "x-sasi-token": token || "",
           "x-sasi-profile-id": profileIdFromUrl || me?.id || "",
         },
         body: JSON.stringify({
