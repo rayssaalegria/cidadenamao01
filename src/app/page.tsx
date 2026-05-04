@@ -13,8 +13,11 @@ export default function Home() {
           <Link className={styles.primary} href="/meus-dados">
             Meus Dados
           </Link>
-          <Link className={styles.secondary} href="/agendamentos">
-            Agendamentos
+          <Link className={styles.secondary} href="/novo-exame">
+            Novo Exame
+          </Link>
+          <Link className={styles.secondary} href="/minhas-solicitacoes">
+            Minhas solicitações
           </Link>
         </div>
       </main>

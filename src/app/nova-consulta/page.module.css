@@ -1,0 +1,1044 @@
+.page {
+  background: #f9fafb;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.content {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+}
+
+.cardPad16 {
+  padding: 16px;
+}
+
+.cardPad24Y {
+  padding: 24px 24px;
+}
+
+.cardInner24 {
+  padding: 0;
+}
+
+.rowBetween {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-bottom: 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 46px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px 2px rgba(0, 0, 0, 0.25);
+  flex: 0 0 auto;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userMeta {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: #000;
+}
+
+.label10 {
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+.value12 {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.24px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qrButton {
+  height: 40px;
+  width: 41px;
+  border-radius: 5px;
+  border: 1px solid #0e4995;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.qrOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.31);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 24px;
+}
+
+.qrModal {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qrHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qrTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.qrCloseBtn {
+  height: 36px;
+  width: 36px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.qrBox {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 12px;
+}
+
+.qrImg {
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+}
+
+.qrHint {
+  font-size: 12px;
+  color: #4b5563;
+  line-height: 16px;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0;
+  color: #000;
+}
+
+.fieldValue {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.24px;
+  white-space: nowrap;
+}
+
+.inputBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.inputLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.selectLike {
+  height: 50px;
+  border-radius: 5px;
+  border: 1px solid #e2e4e9;
+  background: #fcfcfd;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.selectNative {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.selectNative:disabled {
+  cursor: not-allowed;
+  color: #a7afbe;
+}
+
+.selectNative option:disabled {
+  color: #a7afbe;
+}
+
+.selectPlaceholder {
+  font-size: 14px;
+  font-weight: 500;
+  color: #a7afbe;
+}
+
+.selectValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.primaryButton {
+  height: 50px;
+  border-radius: 5px;
+  border: none;
+  background: #33a13c;
+  color: #fcfcfd;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.backButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #414958;
+}
+
+.title14 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #414958;
+}
+
+/* Restante do layout (calendário, abas, sheet, etc.) */
+/* Este arquivo foi restaurado para voltar a compilar e manter o visual-base. */
+
+.calendarTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.monthBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0 20px;
+}
+
+.monthName {
+  font-size: 20px;
+  font-weight: 600;
+  color: #222b45;
+  line-height: 16px;
+}
+
+.year {
+  font-size: 12px;
+  color: #8f9bb3;
+}
+
+.navBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(143, 155, 179, 0.25);
+  background: #f3f4f6;
+  cursor: pointer;
+}
+
+.dowRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 14px;
+  font-size: 13px;
+  color: #8f9bb3;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.day {
+  height: 31px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #222b45;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.dayMuted {
+  opacity: 0.6;
+  color: #8f9bb3;
+}
+
+.dayAvailable {
+  background: rgba(32, 176, 75, 0.24);
+}
+
+.daySelected {
+  background: #075f21;
+  color: #fff;
+  opacity: 1;
+}
+
+.dividerLine {
+  width: 26px;
+  height: 2px;
+  background: rgba(143, 155, 179, 0.25);
+  border-radius: 999px;
+  margin: 0 auto;
+}
+
+.slotsTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24px;
+}
+
+.slotsSub {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.slotRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.radioBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 2px solid #0f752e;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.radioBtnChecked::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #0f752e;
+}
+
+.slotTime {
+  font-size: 14px;
+  color: #0f752e;
+}
+
+.pin {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+}
+
+.slotPlace {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #0f752e;
+  text-align: center;
+}
+
+.tabsBar {
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(195, 201, 232, 0.6);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.tabBtn {
+  padding: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ababab;
+}
+
+.tabBtnActive {
+  color: #232d64;
+  border-bottom: 2px solid #232d64;
+}
+
+.apptCard {
+  padding: 16px;
+}
+
+.apptTitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: #1f2937;
+  line-height: 24px;
+}
+
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.31);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 50;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 390px;
+  background: #ffffff;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  padding: 24px;
+}
+
+.sheetTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.error {
+  margin: 0 24px;
+  padding: 12px 16px;
+  color: #b00020;
+  background: #fff5f5;
+  border: 1px solid #ffd6d6;
+  border-radius: 8px;
+}
+
+@media (min-width: 480px) {
+  .content {
+    max-width: 390px;
+    margin: 0 auto;
+  }
+}
+.page {
+  background: #f9fafb;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.content {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+}
+
+.cardPad16 {
+  padding: 16px;
+}
+
+.cardPad24Y {
+  padding: 24px 24px;
+}
+
+.cardInner24 {
+  padding: 0;
+}
+
+.rowBetween {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-bottom: 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 46px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px 2px rgba(0, 0, 0, 0.25);
+  flex: 0 0 auto;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userMeta {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: #000;
+}
+
+.label10 {
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+.value12 {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.24px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qrButton {
+  height: 40px;
+  width: 41px;
+  border-radius: 5px;
+  border: 1px solid #0e4995;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.qrOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.31);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 24px;
+}
+
+.qrModal {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qrHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qrTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.qrCloseBtn {
+  height: 36px;
+  width: 36px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.qrBox {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 12px;
+}
+
+.qrImg {
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+}
+
+.qrHint {
+  font-size: 12px;
+  color: #4b5563;
+  line-height: 16px;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0;
+  color: #000;
+}
+
+.fieldValue {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.24px;
+  white-space: nowrap;
+}
+
+.inputBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.inputLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.selectLike {
+  height: 50px;
+  border-radius: 5px;
+  border: 1px solid #e2e4e9;
+  background: #fcfcfd;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.selectNative {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.selectNative:disabled {
+  cursor: not-allowed;
+  color: #a7afbe;
+}
+
+.selectNative option:disabled {
+  color: #a7afbe;
+}
+
+.selectPlaceholder {
+  font-size: 14px;
+  font-weight: 500;
+  color: #a7afbe;
+}
+
+.selectValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.primaryButton {
+  height: 50px;
+  border-radius: 5px;
+  border: none;
+  background: #33a13c;
+  color: #fcfcfd;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.backButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #414958;
+}
+
+.title14 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #414958;
+}
+
+.calendarTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.monthBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0 20px;
+}
+
+.monthName {
+  font-size: 20px;
+  font-weight: 600;
+  color: #222b45;
+  line-height: 16px;
+}
+
+.year {
+  font-size: 12px;
+  color: #8f9bb3;
+}
+
+.navBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(143, 155, 179, 0.25);
+  background: #f3f4f6;
+  cursor: pointer;
+}
+
+.dowRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 14px;
+  font-size: 13px;
+  color: #8f9bb3;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.day {
+  height: 31px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #222b45;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.dayMuted {
+  opacity: 0.6;
+  color: #8f9bb3;
+}
+
+.dayAvailable {
+  background: rgba(32, 176, 75, 0.24);
+}
+
+.daySelected {
+  background: #075f21;
+  color: #fff;
+  opacity: 1;
+}
+
+.dividerLine {
+  width: 26px;
+  height: 2px;
+  background: rgba(143, 155, 179, 0.25);
+  border-radius: 999px;
+  margin: 0 auto;
+}
+
+.slotsTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24px;
+}
+
+.slotsSub {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.slotRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.radioBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 2px solid #0f752e;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.radioBtnChecked::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #0f752e;
+}
+
+.slotTime {
+  font-size: 14px;
+  color: #0f752e;
+}
+
+.pin {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+}
+
+.slotPlace {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #0f752e;
+  text-align: center;
+}
+
+.tabsBar {
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(195, 201, 232, 0.6);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.tabBtn {
+  padding: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ababab;
+}
+
+.tabBtnActive {
+  color: #232d64;
+  border-bottom: 2px solid #232d64;
+}
+
+.apptCard {
+  padding: 16px;
+}
+
+.apptTitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: #1f2937;
+  line-height: 24px;
+}
+
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.31);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 50;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 390px;
+  background: #ffffff;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  padding: 24px;
+}
+
+.sheetTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2b303b;
+}
+
+.error {
+  margin: 0 24px;
+  padding: 12px 16px;
+  color: #b00020;
+  background: #fff5f5;
+  border: 1px solid #ffd6d6;
+  border-radius: 8px;
+}
+
+@media (min-width: 480px) {
+  .content {
+    max-width: 390px;
+    margin: 0 auto;
+  }
+}
+

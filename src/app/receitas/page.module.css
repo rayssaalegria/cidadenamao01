@@ -1,0 +1,375 @@
+.page {
+  background: #f9fafb;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.content {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+  width: 100%;
+}
+
+.cardPad24Y {
+  padding: 24px 0;
+}
+
+.cardInner {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 46px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px 2px rgba(0, 0, 0, 0.25);
+  flex: 0 0 auto;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userMeta {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: #000;
+}
+
+.label10 {
+  font-size: 10px;
+  letter-spacing: 0.2px;
+  color: #000;
+}
+
+.value12 {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.24px;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qrButton {
+  height: 40px;
+  width: 41px;
+  border-radius: 5px;
+  border: 1px solid #0e4995;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.qrOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.31);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  padding: 24px;
+}
+
+.qrModal {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qrHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qrTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.qrCloseBtn {
+  height: 36px;
+  width: 36px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.qrBox {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 12px;
+}
+
+.qrImg {
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+}
+
+.qrHint {
+  font-size: 12px;
+  color: #4b5563;
+  line-height: 16px;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0;
+  color: #000;
+}
+
+.fieldValue {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.24px;
+  white-space: nowrap;
+}
+
+.tabsBar {
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(195, 201, 232, 0.6);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.tabBtn {
+  padding: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ababab;
+}
+
+.tabBtnActive {
+  color: #232d64;
+  border-bottom: 2px solid #232d64;
+}
+
+.rxCard {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+}
+
+.rxTopRow {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e2e2;
+  padding-bottom: 0;
+}
+
+.rxTopLabel {
+  font-size: 10px;
+  font-weight: 400;
+  color: #1f2937;
+}
+
+.rxTopValue {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.rxMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  color: #000;
+}
+
+.rxButton {
+  height: 50px;
+  width: 100%;
+  border-radius: 5px;
+  border: none;
+  background: #33a13c;
+  color: #fcfcfd;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  z-index: 80;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 346px;
+  margin-top: 67px; /* aproxima do layout do Figma */
+  background: #f7f8ff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  border-bottom: 1px solid rgba(195, 201, 232, 0.6);
+}
+
+.dialogTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #232d64;
+  line-height: 1;
+}
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialogContent {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.rxImage {
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+  object-fit: cover;
+  background: #fff;
+}
+
+.dialogFooter {
+  border-top: 1px solid rgba(195, 201, 232, 0.6);
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.secondaryBtn {
+  height: 50px;
+  border-radius: 5px;
+  border: 1px solid #232d64;
+  background: transparent;
+  color: #232d64;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.primaryBtn {
+  height: 50px;
+  border-radius: 5px;
+  border: none;
+  background: #232d64;
+  color: #f7f8ff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.empty {
+  color: #8f9bb3;
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+@media (min-width: 480px) {
+  .content {
+    max-width: 390px;
+    margin: 0 auto;
+  }
+}
+

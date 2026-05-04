@@ -13,6 +13,21 @@ export type SasiProfile = {
     name?: string | null;
     email?: string | null;
     phone?: string | null;
+    renda?: string | null;
+    genero?: string | null;
+    profissao?: string | null;
+    pessoal_uf?: string | null;
+    pessoal_cep?: string | null;
+    pessoal_rua?: string | null;
+    pessoal_numero?: string | null;
+    escolaridade?: string | null;
+    estado_civil?: string | null;
+    documento_sus?: string | null;
+    documento_rg?: string | null;
+    pessoal_bairro?: string | null;
+    pessoal_cidade?: string | null;
+    data_nascimento?: string | null;
+    pessoal_complemento?: string | null;
   } | null;
   App?: {
     id: number;
@@ -59,5 +74,22 @@ export async function sasiFetch<T>(
   }
 
   return (await res.json()) as T;
+}
+
+export async function sasiPost<T>(
+  path: string,
+  token: string,
+  body: unknown,
+  init?: RequestInit,
+): Promise<T> {
+  return await sasiFetch<T>(path, token, {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+    ...init,
+  });
 }
 

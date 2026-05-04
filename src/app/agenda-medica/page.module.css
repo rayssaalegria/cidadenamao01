@@ -1,0 +1,115 @@
+.page {
+  background: #f9fafb;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.content {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.title14 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #414958;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+  padding: 16px;
+}
+
+.inputLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b303b;
+  margin-bottom: 4px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selectLike,
+.inputLike {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.selectNative,
+.inputNative {
+  width: 100%;
+}
+
+.muted {
+  color: #8f9bb3;
+  font-size: 12px;
+}
+
+.primaryButton {
+  height: 50px;
+  border-radius: 5px;
+  border: none;
+  background: #33a13c;
+  color: #fcfcfd;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  border-radius: 5px;
+  padding: 12px 12px;
+  font-size: 14px;
+  color: #111827;
+}
+
+@media (min-width: 480px) {
+  .content {
+    max-width: 390px;
+    margin: 0 auto;
+  }
+}
+

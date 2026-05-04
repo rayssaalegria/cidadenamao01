@@ -1,12 +1,32 @@
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #121823;
+
+  /* SASI / Sumé DS (inputs) */
+  --ds-text-primary: #090b0d;
+  --ds-text-secondary: #232d64;
+  --ds-text-tertiary: #394aa5;
+  --ds-text-disabled: #a7afdd;
+  --ds-text-error: #ba2612;
+  --ds-text-positive: #09886a;
+
+  --ds-input-bg: rgba(195, 201, 232, 0.2);
+  --ds-input-bg-disabled: rgba(195, 201, 232, 0.6);
+  --ds-border-subtle: rgba(195, 201, 232, 0.6);
+  --ds-border-focus: #394aa5;
+  --ds-radius-8: 8px;
+
+  --ds-control-h-sm: 32px;
+  --ds-control-h-md: 40px;
+  --ds-control-h-lg: 48px;
+  --ds-control-px: 16px;
+  --ds-control-gap: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #121823;
   }
 }
 
@@ -21,20 +41,138 @@ body {
 }
 
 body {
+  width: 100%;
   min-height: 100%;
   display: flex;
   flex-direction: column;
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+input,
+select,
+textarea,
+button {
+  color: var(--foreground);
+}
+
+::placeholder {
+  color: color-mix(in srgb, var(--foreground), transparent 55%);
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+/* ----- DS Controls (global) ----- */
+
+:where(input, select, textarea) {
+  font-family: var(--font-inter), system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+:where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]) {
+  width: 100%;
+  min-width: 0;
+  border-radius: var(--ds-radius-8);
+  border: 1px solid var(--ds-border-subtle);
+  background: var(--ds-input-bg);
+  padding: 8px var(--ds-control-px);
+  font-size: 14px;
+  line-height: 16px;
+  color: var(--ds-text-tertiary);
+  outline: none;
+}
+
+:where(textarea) {
+  min-height: 120px;
+  resize: vertical;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+:where(select) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: calc(var(--ds-control-px) + 18px);
+}
+
+:where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):focus-visible {
+  border-width: 2px;
+  border-color: var(--ds-border-focus);
+  background: var(--ds-input-bg);
+  color: var(--ds-text-primary);
+}
+
+:where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):disabled {
+  background: var(--ds-input-bg-disabled);
+  border-color: transparent;
+  color: var(--ds-text-disabled);
+  cursor: not-allowed;
+}
+
+:where(input, textarea)::placeholder {
+  color: var(--ds-text-tertiary);
+}
+
+/* Optional utility classes for consistent sizing/states across pages */
+.ds-control {
+  height: var(--ds-control-h-md);
+}
+
+textarea.ds-control {
+  height: auto;
+}
+
+.ds-sm {
+  height: var(--ds-control-h-sm);
+}
+
+.ds-md {
+  height: var(--ds-control-h-md);
+}
+
+.ds-lg {
+  height: var(--ds-control-h-lg);
+}
+
+.ds-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--ds-text-secondary);
+}
+
+.ds-required {
+  color: var(--ds-text-error);
+}
+
+.ds-hint {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ds-text-tertiary);
+}
+
+.ds-error {
+  border-color: var(--ds-text-error) !important;
+  background: rgba(253, 234, 232, 1) !important;
+  color: var(--ds-text-primary) !important;
+}
+
+.ds-positive {
+  border-color: var(--ds-text-positive) !important;
+  background: rgba(231, 249, 244, 1) !important;
+  color: var(--ds-text-primary) !important;
 }
 
 a {

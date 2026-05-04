@@ -3,21 +3,24 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
 }
 
 .header {
   position: relative;
   width: 100%;
-  max-width: 360px;
+  max-width: 100%;
 }
 
 .headerGradient {
+  width: 100%;
   height: 211px;
   background: linear-gradient(180deg, #1db2b6 0%, #2d2f88 100%);
 }
 
 .headerStripe {
+  width: 100%;
   height: 10px;
   background: #ec6906;
 }
@@ -48,6 +51,7 @@
 .photo {
   width: 100%;
   height: 100%;
+  background-color: rgba(217, 221, 228, 1);
   object-fit: cover;
 }
 
@@ -65,6 +69,47 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.editMenu {
+  position: absolute;
+  top: 318px;
+  left: calc(50% + 34px);
+  transform: translateX(-50%);
+  min-width: 160px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  padding: 6px;
+  z-index: 10;
+}
+
+.menuItem {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 10px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .badge {
@@ -101,8 +146,9 @@
 
 .content {
   width: 100%;
-  max-width: 360px;
-  padding: 24px 24px 32px;
+  max-width: 100%;
+  /* Espaço extra para não colidir com a foto/ações no header */
+  padding: 120px clamp(16px, 5vw, 24px) 32px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -113,10 +159,11 @@
   border: 1px solid #e5e5e5;
   border-radius: 5px;
   padding: 24px 0;
+  width: 100%;
 }
 
 .cardInner {
-  padding: 0 24px;
+  padding: 0 clamp(16px, 5vw, 24px);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -138,17 +185,57 @@
 }
 
 .label {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.2px;
   color: #000;
 }
 
 .value {
-  font-size: 12px;
+  font-size: 16px;
   letter-spacing: 0.24px;
   font-weight: 500;
   color: #000;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: right;
+}
+
+.input {
+  width: min(260px, 70vw);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.actionsBar {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 4px 0 8px;
+}
+
+.primaryButton,
+.secondaryButton {
+  border-radius: 5px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.primaryButton {
+  background: #2d2f88;
+  color: #fff;
+}
+
+.secondaryButton {
+  background-color: rgba(55, 83, 151, 1);
+  border-color: #e5e5e5;
+  color: rgba(245, 245, 245, 1);
 }
 
 .qrCard {
@@ -159,6 +246,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 
 .qrBox {
@@ -192,13 +280,29 @@
 }
 
 .error {
-  max-width: 360px;
   width: 100%;
+  max-width: 100%;
   margin-top: 8px;
   padding: 12px 16px;
   color: #b00020;
   background: #fff5f5;
   border: 1px solid #ffd6d6;
   border-radius: 8px;
+}
+
+@media (max-width: 360px) {
+  .row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .value {
+    text-align: left;
+  }
+
+  .input {
+    width: 100%;
+  }
 }
 
