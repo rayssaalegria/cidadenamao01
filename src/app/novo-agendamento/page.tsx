@@ -984,14 +984,16 @@ export default function NovoAgendamentoPage() {
               </div>
             )}
 
-            <button
-              className={styles.primaryButton}
-              type="button"
-              disabled={medicosByEspecialidade.length ? !selectedDoctorId : true}
-              onClick={() => setStep("novo_data")}
-            >
-              Continuar
-            </button>
+            {medicosByEspecialidade.length ? (
+              <button
+                className={styles.primaryButton}
+                type="button"
+                disabled={!selectedDoctorId}
+                onClick={() => setStep("novo_data")}
+              >
+                Continuar
+              </button>
+            ) : null}
           </>
         ) : null}
 
