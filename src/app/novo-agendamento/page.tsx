@@ -187,6 +187,23 @@ type FlowStep = "lista" | "novo_tipo" | "novo_data" | "novo_horario";
 
 type DisponSlot = { id: number; time: string; localId: number | null; local: string };
 
+type MedicoRow = {
+  id: number;
+  nome: string;
+  crm: string;
+  especialidade: string | null;
+  ativo: boolean;
+};
+
+type DoctorSlot = {
+  slot_id: number;
+  doctor_id: number;
+  date: string;
+  start_time: string; // HH:mm
+  end_time: string; // HH:mm
+  status: "available";
+};
+
 function fmtCpf(cpf: string) {
   const d = cpf.replace(/\D/g, "");
   if (d.length !== 11) return cpf;
@@ -247,6 +264,9 @@ export default function NovoAgendamentoPage() {
   const [selectedHorario, setSelectedHorario] = useState<string>("");
   const [selectedLocalId, setSelectedLocalId] = useState<number | null>(null);
   const [selectedLocal, setSelectedLocal] = useState<string>("");
+  const [selectedDoctorId, setSelectedDoctorId] = useState<number | null>(null);
+  const [selectedDoctorNome, setSelectedDoctorNome] = useState<string>("");
+  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -284,6 +304,9 @@ export default function NovoAgendamentoPage() {
     setSelectedHorario("");
     setSelectedLocalId(null);
     setSelectedLocal("");
+    setSelectedDoctorId(null);
+    setSelectedDoctorNome("");
+    setSelectedSlotId(null);
   }
 
   useEffect(() => {
@@ -470,7 +493,14 @@ export default function NovoAgendamentoPage() {
 
   const [availableDates, setAvailableDates] = useState<Set<string>>(() => new Set());
   const [slots, setSlots] = useState<DisponSlot[]>([]);
+  const [medicosByEspecialidade, setMedicosByEspecialidade] = useState<MedicoRow[]>([]);
+  const [doctorSlots, setDoctorSlots] = useState<DoctorSlot[]>([]);
   const [loadingDispon, setLoadingDispon] = useState(false);
+
+  const selectedMonth = useMemo(() => {
+    const baseIso = selectedDate || new Date().toISOString().slice(0, 10);
+    return baseIso.slice(0, 7); // YYYY-MM
+  }, [selectedDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -478,17 +508,44 @@ export default function NovoAgendamentoPage() {
       if (!especialidadeValue) {
         setAvailableDates(new Set());
         setSlots([]);
+        setMedicosByEspecialidade([]);
+        setDoctorSlots([]);
         return;
       }
       setLoadingDispon(true);
       try {
-        const res = await fetch(
-          `/api/especialidades/disponibilidade/datas?especialidade=${encodeURIComponent(especialidadeValue)}`,
-          { cache: "no-store" },
+        // Carrega médicos ativos e filtra pela especialidade (label)
+        const selectedText =
+          especialidadeLabel || ESPECIALIDADES.options.find((o) => o.value === especialidadeValue)?.label || especialidadeValue;
+        const target = String(selectedText || "").trim().toLowerCase();
+
+        const medRes = await fetch("/api/medicos", { cache: "no-store" });
+        const medJson = (await medRes.json()) as { data?: MedicoRow[]; error?: string };
+        if (!medRes.ok) throw new Error(medJson.error || "Falha ao carregar médicos");
+
+        const filtered = (medJson.data || []).filter(
+          (m) => m?.ativo && String(m.especialidade || "").trim().toLowerCase() === target,
         );
-        const json = (await res.json()) as { dates?: string[]; error?: string };
-        if (!res.ok) throw new Error(json.error || "Falha ao carregar datas");
-        if (!cancelled) setAvailableDates(new Set((json.dates || []).filter(Boolean)));
+        if (!cancelled) setMedicosByEspecialidade(filtered);
+
+        // Datas disponíveis: se já escolheu médico, vêm dos slots dele; senão, mantém o calendário legado
+        if (selectedDoctorId) {
+          const datesRes = await fetch(
+            `/api/doctors/${encodeURIComponent(String(selectedDoctorId))}/available-dates?month=${encodeURIComponent(selectedMonth)}`,
+            { cache: "no-store" },
+          );
+          const datesJson = (await datesRes.json()) as { dates?: string[]; error?: string };
+          if (!datesRes.ok) throw new Error(datesJson.error || "Falha ao carregar datas");
+          if (!cancelled) setAvailableDates(new Set((datesJson.dates || []).filter(Boolean)));
+        } else {
+          const res = await fetch(
+            `/api/especialidades/disponibilidade/datas?especialidade=${encodeURIComponent(especialidadeValue)}`,
+            { cache: "no-store" },
+          );
+          const json = (await res.json()) as { dates?: string[]; error?: string };
+          if (!res.ok) throw new Error(json.error || "Falha ao carregar datas");
+          if (!cancelled) setAvailableDates(new Set((json.dates || []).filter(Boolean)));
+        }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar datas");
       } finally {
@@ -499,26 +556,37 @@ export default function NovoAgendamentoPage() {
     return () => {
       cancelled = true;
     };
-  }, [especialidadeValue]);
+  }, [especialidadeValue, especialidadeLabel, selectedDoctorId, selectedMonth]);
 
   useEffect(() => {
     let cancelled = false;
     async function run() {
       if (!especialidadeValue || !selectedDate) {
         setSlots([]);
+        setDoctorSlots([]);
         return;
       }
       setLoadingDispon(true);
       try {
-        const res = await fetch(
-          `/api/especialidades/disponibilidade/slots?especialidade=${encodeURIComponent(especialidadeValue)}&date=${encodeURIComponent(
-            selectedDate,
-          )}`,
-          { cache: "no-store" },
-        );
-        const json = (await res.json()) as { slots?: DisponSlot[]; error?: string };
-        if (!res.ok) throw new Error(json.error || "Falha ao carregar horários");
-        if (!cancelled) setSlots(json.slots || []);
+        if (selectedDoctorId) {
+          const res = await fetch(
+            `/api/doctors/${encodeURIComponent(String(selectedDoctorId))}/available-slots?date=${encodeURIComponent(selectedDate)}`,
+            { cache: "no-store" },
+          );
+          const json = (await res.json()) as DoctorSlot[] | { error?: string };
+          if (!res.ok) throw new Error((json as any).error || "Falha ao carregar horários");
+          if (!cancelled) setDoctorSlots(Array.isArray(json) ? json : []);
+        } else {
+          const res = await fetch(
+            `/api/especialidades/disponibilidade/slots?especialidade=${encodeURIComponent(especialidadeValue)}&date=${encodeURIComponent(
+              selectedDate,
+            )}`,
+            { cache: "no-store" },
+          );
+          const json = (await res.json()) as { slots?: DisponSlot[]; error?: string };
+          if (!res.ok) throw new Error(json.error || "Falha ao carregar horários");
+          if (!cancelled) setSlots(json.slots || []);
+        }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar horários");
       } finally {
@@ -529,7 +597,7 @@ export default function NovoAgendamentoPage() {
     return () => {
       cancelled = true;
     };
-  }, [especialidadeValue, selectedDate]);
+  }, [especialidadeValue, selectedDate, selectedDoctorId]);
 
   const calendar = useMemo(() => {
     const base = selectedDate ? new Date(selectedDate + "T00:00:00") : new Date();
@@ -600,7 +668,8 @@ export default function NovoAgendamentoPage() {
   }
 
   async function confirmAgendamento() {
-    if (!cpf || !fullName || !especialidadeValue || !selectedDate || !selectedHorario || !selectedLocal) return;
+    const localFinal = selectedDoctorNome || selectedLocal;
+    if (!cpf || !fullName || !especialidadeValue || !selectedDate || !selectedHorario || !localFinal) return;
     setSaving(true);
     try {
       const res = await fetch("/api/agendamentos", {
@@ -620,8 +689,10 @@ export default function NovoAgendamentoPage() {
           localId: selectedLocalId,
           dataConsulta: selectedDate,
           horarioConsulta: selectedHorario,
-          localConsulta: selectedLocal,
+          localConsulta: localFinal,
           qrCode: me?.customProps?.code || null,
+          doctorId: selectedDoctorId,
+          slotId: selectedSlotId,
         }),
       });
       const json = (await res.json()) as { ok?: boolean; error?: string; row?: AgendamentoRow };
@@ -837,6 +908,37 @@ export default function NovoAgendamentoPage() {
               </div>
             </div>
 
+            <div className={`${styles.card} ${styles.cardPad24Y}`}>
+              <div className={`${styles.cardInner24} ${styles.inputBlock}`}>
+                <div className={styles.inputLabel}>Médico</div>
+                <select
+                  className="ds-control ds-md"
+                  value={selectedDoctorId ? String(selectedDoctorId) : ""}
+                  onChange={(e) => {
+                    const id = Number(e.target.value || "");
+                    const nextId = Number.isFinite(id) && id > 0 ? id : null;
+                    setSelectedDoctorId(nextId);
+                    const m = medicosByEspecialidade.find((x) => x.id === nextId);
+                    setSelectedDoctorNome(m?.nome || "");
+                    // reset da seleção de agenda
+                    setSelectedDate("");
+                    setSelectedHorario("");
+                    setSelectedLocalId(null);
+                    setSelectedLocal("");
+                    setSelectedSlotId(null);
+                  }}
+                >
+                  <option value="">{loadingDispon ? "Carregando..." : "Selecione um médico"}</option>
+                  {medicosByEspecialidade.map((m) => (
+                    <option key={m.id} value={String(m.id)}>
+                      {m.nome} • {m.crm}
+                    </option>
+                  ))}
+                </select>
+                <div className="ds-hint">Mostrando apenas médicos ativos dessa especialidade.</div>
+              </div>
+            </div>
+
             <div className={`${styles.card} ${styles.cardPad16}`}>
               <div className={styles.calendarTitle}>Selecione uma data</div>
               <div className={styles.calendarHeader}>
@@ -911,7 +1013,12 @@ export default function NovoAgendamentoPage() {
               <div className={styles.dividerLine} />
             </div>
 
-            <button className={styles.primaryButton} type="button" disabled={!selectedDate || loadingDispon} onClick={() => setStep("novo_horario")}>
+            <button
+              className={styles.primaryButton}
+              type="button"
+              disabled={!selectedDoctorId || !selectedDate || loadingDispon}
+              onClick={() => setStep("novo_horario")}
+            >
               Continuar
             </button>
           </>
@@ -926,6 +1033,13 @@ export default function NovoAgendamentoPage() {
               </div>
             </div>
 
+            <div className={`${styles.card} ${styles.cardPad24Y}`}>
+              <div className={styles.cardInner24}>
+                <div className={styles.label10}>Médico</div>
+                <div className={styles.value12}>{selectedDoctorNome || "-"}</div>
+              </div>
+            </div>
+
             <div className={`${styles.card} ${styles.cardPad16}`}>
               <div className={styles.rowBetween}>
                 <div>
@@ -937,7 +1051,39 @@ export default function NovoAgendamentoPage() {
               <div style={{ height: 16 }} />
 
               <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                {slots.length ? (
+                {selectedDoctorId ? (
+                  doctorSlots.length ? (
+                    doctorSlots.map((s) => {
+                      const checked = selectedSlotId === s.slot_id;
+                      return (
+                        <div key={s.slot_id} className={styles.slotRow}>
+                          <button
+                            type="button"
+                            className={[styles.radioBtn, checked ? styles.radioBtnChecked : ""].filter(Boolean).join(" ")}
+                            aria-label={`Selecionar ${s.start_time}`}
+                            aria-checked={checked}
+                            role="radio"
+                            onClick={() => {
+                              setSelectedSlotId(s.slot_id);
+                              setSelectedHorario(s.start_time);
+                              setSelectedLocalId(null);
+                              setSelectedLocal(selectedDoctorNome || "Consultório");
+                            }}
+                          />
+                          <div className={styles.slotTime}>{s.start_time}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                            <span className={styles.pin} aria-hidden="true">
+                              ⌁
+                            </span>
+                            <div className={styles.slotPlace}>{selectedDoctorNome || "Consultório"}</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ color: "#8f9bb3" }}>Sem horários disponíveis.</div>
+                  )
+                ) : slots.length ? (
                   slots.map((s) => {
                     const checked = selectedHorario === s.time && selectedLocalId === s.localId;
                     return (
@@ -952,6 +1098,7 @@ export default function NovoAgendamentoPage() {
                             setSelectedHorario(s.time);
                             setSelectedLocalId(s.localId);
                             setSelectedLocal(s.local);
+                            setSelectedSlotId(null);
                           }}
                         />
                         <div className={styles.slotTime}>{s.time}</div>
@@ -970,7 +1117,12 @@ export default function NovoAgendamentoPage() {
               </div>
             </div>
 
-            <button className={styles.primaryButton} type="button" disabled={!selectedHorario} onClick={() => setSheetOpen(true)}>
+            <button
+              className={styles.primaryButton}
+              type="button"
+              disabled={selectedDoctorId ? !selectedSlotId : !selectedHorario}
+              onClick={() => setSheetOpen(true)}
+            >
               Continuar
             </button>
           </>
