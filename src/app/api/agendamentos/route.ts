@@ -29,6 +29,8 @@ type CreateBody = {
   horarioConsulta: string; // HH:mm
   localConsulta: string;
   qrCode?: string | null;
+  doctorId?: number | null;
+  slotId?: number | null;
 };
 
 type PatchBody = {
@@ -185,6 +187,8 @@ export async function POST(req: Request) {
   const horarioConsulta = typeof body.horarioConsulta === "string" ? body.horarioConsulta.trim() : "";
   const localConsulta = typeof body.localConsulta === "string" ? body.localConsulta.trim() : "";
   const carteiraSus = typeof body.carteiraSus === "string" ? body.carteiraSus.trim() : "";
+  const doctorId = typeof body.doctorId === "number" && Number.isFinite(body.doctorId) ? body.doctorId : null;
+  const slotId = typeof body.slotId === "number" && Number.isFinite(body.slotId) ? body.slotId : null;
 
   if (!cpf || !nome || !especialidade || !dataConsulta || !horarioConsulta || !localConsulta) {
     return NextResponse.json(
@@ -197,6 +201,52 @@ export async function POST(req: Request) {
   if (cpfNum === null) return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
 
   const susNum = carteiraSus ? toNumericOrNull(carteiraSus) : null;
+
+  // Se vier doctorId+slotId, valida e "reserva" o slot (available -> booked) antes de inserir o agendamento.
+  // Isso impede que o mesmo horário apareça como disponível para outros pacientes.
+  let medicoNome: string | null = null;
+  let bookedSlot: { id: number } | null = null;
+  if (doctorId && slotId) {
+    const medicoRes = await supabaseAdmin.from("medicos").select("id,nome").eq("id", doctorId).single();
+    if (medicoRes.error) return NextResponse.json({ error: medicoRes.error.message }, { status: 500 });
+    if (!medicoRes.data) return NextResponse.json({ error: "Médico não encontrado" }, { status: 404 });
+    medicoNome = String((medicoRes.data as { nome?: unknown }).nome || "").trim() || null;
+
+    // Confere se o slot é do médico, é da data/horário informados, e ainda está disponível.
+    const slotRow = await supabaseAdmin
+      .from("available_slots")
+      .select("id,doctor_id,date,start_time,status")
+      .eq("id", slotId)
+      .single();
+    if (slotRow.error) return NextResponse.json({ error: slotRow.error.message }, { status: 500 });
+    if (!slotRow.data) return NextResponse.json({ error: "Horário não encontrado" }, { status: 404 });
+
+    const slotDoctorId = (slotRow.data as { doctor_id?: unknown }).doctor_id;
+    const slotDate = String((slotRow.data as { date?: unknown }).date || "");
+    const slotStart = String((slotRow.data as { start_time?: unknown }).start_time || "").slice(0, 5);
+    const slotStatus = String((slotRow.data as { status?: unknown }).status || "");
+
+    if (slotDoctorId !== doctorId || slotDate !== dataConsulta || slotStart !== horarioConsulta) {
+      return NextResponse.json({ error: "Horário não corresponde ao médico/data/horário informados" }, { status: 400 });
+    }
+
+    if (slotStatus !== "available") {
+      return NextResponse.json({ error: "Horário indisponível" }, { status: 409 });
+    }
+
+    // Reserva com condição (só atualiza se ainda estiver available).
+    const bookRes = await supabaseAdmin
+      .from("available_slots")
+      .update({ status: "booked", updated_at: new Date().toISOString() })
+      .eq("id", slotId)
+      .eq("status", "available")
+      .select("id")
+      .single();
+
+    if (bookRes.error) return NextResponse.json({ error: bookRes.error.message }, { status: 500 });
+    if (!bookRes.data) return NextResponse.json({ error: "Horário indisponível" }, { status: 409 });
+    bookedSlot = bookRes.data as { id: number };
+  }
 
   const insertRes = await supabaseAdmin
     .from("agendamento")
@@ -213,13 +263,24 @@ export async function POST(req: Request) {
       status: "Agendada",
       sasi_profile_id: sasiProfileId || null,
       sasi_token: token || null,
+      medico_id: doctorId,
+      medico_nome: medicoNome,
+      slot_id: bookedSlot?.id || null,
     })
     .select(
-      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code,sasi_profile_id,sasi_token",
+      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code,sasi_profile_id,sasi_token,medico_id,medico_nome,slot_id",
     )
     .single();
 
   if (insertRes.error) {
+    // Compensação: se reservamos slot, mas falhou inserir agendamento, devolve o slot para available.
+    if (doctorId && slotId) {
+      await supabaseAdmin
+        .from("available_slots")
+        .update({ status: "available", updated_at: new Date().toISOString() })
+        .eq("id", slotId)
+        .eq("status", "booked");
+    }
     return NextResponse.json({ error: insertRes.error.message }, { status: 500 });
   }
 
@@ -235,6 +296,13 @@ export async function POST(req: Request) {
   if (linkErr) {
     // Evita deixar agendamento "órfão" sem vínculo com o solicitante
     await supabaseAdmin.from("agendamento").delete().eq("id", agendamentoId);
+    if (doctorId && slotId) {
+      await supabaseAdmin
+        .from("available_slots")
+        .update({ status: "available", updated_at: new Date().toISOString() })
+        .eq("id", slotId)
+        .eq("status", "booked");
+    }
     return NextResponse.json({ error: `Falha ao vincular solicitante: ${linkErr.message}` }, { status: 500 });
   }
 
