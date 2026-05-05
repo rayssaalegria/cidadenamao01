@@ -718,8 +718,16 @@ export default function NovoAgendamentoPage() {
       const json = (await res.json()) as { ok?: boolean; error?: string; row?: AgendamentoRow };
       if (!res.ok) throw new Error(json.error || "Falha ao confirmar agendamento");
 
-      // Monitoramento SASI: novo-agendamento -> SASI Mobile Messages (ChannelId 27328)
+      // Monitoramento SASI: novo-agendamento -> SASI Mobile Messages
       const notifyTest = (process.env.NEXT_PUBLIC_SASI_NOTIFY_TEST || "").trim().toLowerCase() === "true";
+      const channelIdFromEnv = Number(process.env.NEXT_PUBLIC_SASI_CHANNEL_ID || "");
+      const channelIdFromUrl = Number(new URL(window.location.href).searchParams.get("channelId") || "");
+      const channelId =
+        Number.isFinite(channelIdFromUrl) && channelIdFromUrl > 0
+          ? channelIdFromUrl
+          : Number.isFinite(channelIdFromEnv) && channelIdFromEnv > 0
+            ? channelIdFromEnv
+            : 27328;
       const profileId = profileIdFromUrl || me?.id || "";
       if (profileId && json.row) {
         void fetch("/api/sasi/mobile-messages", {
@@ -733,7 +741,7 @@ export default function NovoAgendamentoPage() {
               text: "",
               data: json.row,
               test: notifyTest,
-              ChannelId: 27328,
+              ChannelId: channelId,
               generatedAt: new Date().toISOString(),
               attachments: [],
               anonymous: false,
