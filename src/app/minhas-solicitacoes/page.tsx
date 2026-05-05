@@ -95,13 +95,16 @@ type DadosUsuariosRow = {
   profile_photo: string | null;
 };
 
-type SolicitacaoRow = {
+type AgendamentoRow = {
   id: number;
   created_at: string;
-  titulo: string | null;
-  descricao: string | null;
-  tipo: string | null;
+  especialidade_agendar: string | null;
+  tipo?: string | null;
+  data_consulta_date: string | null;
+  horario_consulta_time: string | null;
+  local_consulta: string | null;
   status: string | null;
+  exame?: { id: number; nome: string | null } | null;
 };
 
 type TabKey = "Em andamento" | "Concluídas";
@@ -133,7 +136,7 @@ export default function MinhasSolicitacoesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [tab, setTab] = useState<TabKey>("Em andamento");
-  const [items, setItems] = useState<SolicitacaoRow[]>([]);
+  const [items, setItems] = useState<AgendamentoRow[]>([]);
   const [loadingList, setLoadingList] = useState(false);
 
   const [query, setQuery] = useState("");
@@ -232,16 +235,15 @@ export default function MinhasSolicitacoesPage() {
       try {
         const qs = new URLSearchParams();
         qs.set("cpf", cpf);
+        // Status no banco de agendamentos: "Agendada" | "Concluída" | "Cancelada"
         if (tab === "Concluídas") qs.set("status", "Concluída");
-        else qs.set("status", "Em andamento");
-        const res = await fetch(`/api/solicitacoes?${qs.toString()}`, {
-          cache: "no-store",
-        });
-        const json = (await res.json()) as { data?: SolicitacaoRow[]; error?: string };
-        if (!res.ok) throw new Error(json.error || "Falha ao carregar solicitações");
+        else qs.set("status", "Agendada");
+        const res = await fetch(`/api/agendamentos?${qs.toString()}`, { cache: "no-store" });
+        const json = (await res.json()) as { data?: AgendamentoRow[]; error?: string };
+        if (!res.ok) throw new Error(json.error || "Falha ao carregar agendamentos");
         if (!cancelled) setItems(json.data || []);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar solicitações");
+        if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar agendamentos");
       } finally {
         if (!cancelled) setLoadingList(false);
       }
@@ -282,17 +284,18 @@ export default function MinhasSolicitacoesPage() {
     const q = query.trim().toLowerCase();
     return items.filter((it) => {
       if (q) {
-        const hay = `${it.titulo || ""}\n${it.descricao || ""}`.toLowerCase();
+        const title = String(it.exame?.nome || it.especialidade_agendar || "");
+        const hay = `${title}\n${it.local_consulta || ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       if (appliedTipos.length) {
-        const tipo = String(it.tipo || "").trim();
+        const tipo = String(it.tipo || "especialidade").trim();
         if (!tipo) return false;
         const ok = appliedTipos.some((t) => t.toLowerCase() === tipo.toLowerCase());
         if (!ok) return false;
       }
       if (appliedFrom && appliedTo) {
-        const created = new Date(it.created_at).getTime();
+        const created = new Date(it.data_consulta_date || it.created_at).getTime();
         const from = new Date(appliedFrom + "T00:00:00").getTime();
         const to = new Date(appliedTo + "T23:59:59").getTime();
         if (Number.isFinite(created) && (created < from || created > to)) return false;
@@ -303,19 +306,16 @@ export default function MinhasSolicitacoesPage() {
 
   function tipoLabel(tipo: string) {
     const t = tipo.trim().toLowerCase();
-    if (t === "denuncia" || t === "denúncia") return "Denúncia";
-    if (t === "sugestao" || t === "sugestão") return "Sugestão";
-    if (t === "solicitacao" || t === "solicitação") return "Solicitação";
-    if (t === "reclamacao" || t === "reclamação") return "Reclamação";
-    if (t === "elogio") return "Elogio";
-    return tipo.trim() || "Solicitação";
+    if (t === "exame") return "Exame";
+    // Compat: consulta é "especialidade" (ou nulo em legados)
+    if (!t || t === "especialidade") return "Consulta";
+    return tipo.trim() || "Consulta";
   }
 
   function tipoClass(tipo: string) {
     const t = tipo.trim().toLowerCase();
-    if (t === "denuncia" || t === "denúncia") return styles.badgeTipoDenuncia;
-    if (t === "sugestao" || t === "sugestão") return styles.badgeTipoSugestao;
-    if (t === "solicitacao" || t === "solicitação") return styles.badgeTipoSolicitacao;
+    if (t === "exame") return styles.badgeTipoSugestao;
+    if (!t || t === "especialidade") return styles.badgeTipoSolicitacao;
     return styles.badgeTipoNeutra;
   }
 
@@ -425,27 +425,31 @@ export default function MinhasSolicitacoesPage() {
           </div>
         ) : null}
 
-        <section className={styles.list} aria-label="Lista de solicitações">
+        <section className={styles.list} aria-label="Lista de consultas e exames">
           {loadingList ? (
             <div className={styles.muted}>Carregando…</div>
           ) : filteredItems.length ? (
             filteredItems.map((it) => (
               <article key={it.id} className={styles.card}>
                 <div className={styles.cardTop}>
-                  <div className={styles.cardTitle}>{it.titulo || "-"}</div>
+                  <div className={styles.cardTitle}>{it.exame?.nome || it.especialidade_agendar || "-"}</div>
                   <div className={[styles.badgeTipo, tipoClass(it.tipo || "")].join(" ")}>
                     {tipoLabel(it.tipo || "")}
                   </div>
                 </div>
-                <div className={styles.cardDesc}>{it.descricao || ""}</div>
+                <div className={styles.cardDesc}>{it.local_consulta || ""}</div>
                 <div className={styles.cardBottom}>
                   <div className={styles.badgeStatus}>{tab}</div>
-                  <div className={styles.cardDate}>{fmtShortDateTimeBr(it.created_at)}</div>
+                  <div className={styles.cardDate}>
+                    {it.data_consulta_date && it.horario_consulta_time
+                      ? `${it.data_consulta_date.split("-").reverse().join("/")}, ${it.horario_consulta_time.slice(0, 5)}`
+                      : fmtShortDateTimeBr(it.created_at)}
+                  </div>
                 </div>
               </article>
             ))
           ) : (
-            <div className={styles.muted}>Nenhuma solicitação encontrada.</div>
+            <div className={styles.muted}>Nenhuma consulta/exame encontrado.</div>
           )}
         </section>
       </main>
@@ -479,9 +483,9 @@ export default function MinhasSolicitacoesPage() {
             <div className={styles.sheetDivider} />
 
             <div className={styles.sheetSection}>
-              <div className={styles.sectionTitle}>Tipo de solicitação</div>
+              <div className={styles.sectionTitle}>Tipo</div>
               <div className={styles.tipoGrid}>
-                {["Denúncia", "Sugestão", "Reclamação", "Elogio", "Solicitação"].map((t) => {
+                {["especialidade", "exame"].map((t) => {
                   const selected = draftTipos.some((x) => x.toLowerCase() === t.toLowerCase());
                   return (
                     <button
@@ -490,7 +494,7 @@ export default function MinhasSolicitacoesPage() {
                       className={[styles.tipoPill, selected ? styles.tipoPillSelected : ""].filter(Boolean).join(" ")}
                       onClick={() => toggleDraftTipo(t)}
                     >
-                      {t}
+                      {tipoLabel(t)}
                     </button>
                   );
                 })}
