@@ -179,6 +179,7 @@ type AgendamentoRow = {
   data_consulta_date: string | null;
   horario_consulta_time: string | null;
   local_consulta: string | null;
+  medico_nome?: string | null;
   status: string | null;
   qr_code: string | null;
 };
@@ -1187,6 +1188,10 @@ export default function NovoAgendamentoPage() {
                     <div className={styles.apptTitle}>{a.especialidade_agendar || "-"}</div>
                     <div style={{ height: 16 }} />
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <div className={styles.fieldRow} style={{ padding: 0 }}>
+                        <div className={styles.label10}>Médico:</div>
+                        <div className={styles.fieldValue}>{a.medico_nome || "-"}</div>
+                      </div>
                       <div className={styles.fieldRow} style={{ padding: 0 }}>
                         <div className={styles.label10}>Local:</div>
                         <div className={styles.fieldValue}>{a.local_consulta || "-"}</div>

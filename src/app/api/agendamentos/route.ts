@@ -109,7 +109,7 @@ export async function GET(req: Request) {
   let q = supabaseAdmin
     .from("agendamento")
     .select(
-      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,tipo,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code",
+      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,tipo,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code,medico_id,medico_nome,slot_id",
     )
     .in("id", agendamentoIds)
     .order("created_at", { ascending: false });
