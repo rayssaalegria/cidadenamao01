@@ -687,7 +687,7 @@ export default function NovoAgendamentoPage() {
   }
 
   async function confirmAgendamento() {
-    const localFinal = selectedDoctorNome || selectedLocal;
+    const localFinal = selectedLocal;
     if (!cpf || !fullName || !especialidadeValue || !selectedDate || !selectedHorario || !localFinal) return;
     setSaving(true);
     try {
@@ -1143,7 +1143,7 @@ export default function NovoAgendamentoPage() {
                               setSelectedSlotId(s.slot_id);
                               setSelectedHorario(s.start_time);
                               setSelectedLocalId(null);
-                              setSelectedLocal(selectedDoctorNome || "Consultório");
+                              setSelectedLocal("Consultório");
                             }}
                           />
                           <div className={styles.slotTime}>{s.start_time}</div>
@@ -1151,7 +1151,7 @@ export default function NovoAgendamentoPage() {
                             <span className={styles.pin} aria-hidden="true">
                               ⌁
                             </span>
-                            <div className={styles.slotPlace}>{selectedDoctorNome || "Consultório"}</div>
+                            <div className={styles.slotPlace}>Consultório</div>
                           </div>
                         </div>
                       );
