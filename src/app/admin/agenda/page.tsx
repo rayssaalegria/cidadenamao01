@@ -55,6 +55,7 @@ export default function AdminAgendaConfigPage() {
 
   const [doctorId, setDoctorId] = useState<string>("");
   const [date, setDate] = useState<string>("");
+  const [local, setLocal] = useState<string>("Consultório");
   const [startTime, setStartTime] = useState<string>("08:00");
   const [endTime, setEndTime] = useState<string>("12:00");
   const [duration, setDuration] = useState<number>(30);
@@ -96,6 +97,7 @@ export default function AdminAgendaConfigPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           date,
+          local,
           startTime,
           endTime,
           appointmentDurationMinutes: duration,
@@ -145,6 +147,11 @@ export default function AdminAgendaConfigPage() {
               Data <span className="ds-required">*</span>
             </div>
             <input className="ds-control ds-md" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+
+          <div className={styles.field}>
+            <div className="ds-label">Local</div>
+            <input className="ds-control ds-md" value={local} onChange={(e) => setLocal(e.target.value)} placeholder="Ex: Policlínica / Consultório" />
           </div>
 
           <div className={styles.field}>

@@ -203,6 +203,7 @@ type DoctorSlot = {
   start_time: string; // HH:mm
   end_time: string; // HH:mm
   status: "available";
+  local?: string | null;
 };
 
 function fmtCpf(cpf: string) {
@@ -1143,7 +1144,7 @@ export default function NovoAgendamentoPage() {
                               setSelectedSlotId(s.slot_id);
                               setSelectedHorario(s.start_time);
                               setSelectedLocalId(null);
-                              setSelectedLocal("Consultório");
+                              setSelectedLocal(s.local || "Consultório");
                             }}
                           />
                           <div className={styles.slotTime}>{s.start_time}</div>
@@ -1151,7 +1152,7 @@ export default function NovoAgendamentoPage() {
                             <span className={styles.pin} aria-hidden="true">
                               ⌁
                             </span>
-                            <div className={styles.slotPlace}>Consultório</div>
+                            <div className={styles.slotPlace}>{s.local || "Consultório"}</div>
                           </div>
                         </div>
                       );
@@ -1269,7 +1270,9 @@ export default function NovoAgendamentoPage() {
                       </div>
                       <div className={styles.fieldRow} style={{ padding: 0 }}>
                         <div className={styles.label10}>Local:</div>
-                        <div className={styles.fieldValue}>{a.local_consulta || "-"}</div>
+                        <div className={styles.fieldValue}>
+                          {a.medico_nome && a.local_consulta === a.medico_nome ? "Consultório" : a.local_consulta || "-"}
+                        </div>
                       </div>
                       <div className={styles.fieldRow} style={{ padding: 0 }}>
                         <div className={styles.label10}>Data da Consulta:</div>

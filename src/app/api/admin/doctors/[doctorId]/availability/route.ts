@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 type CreateBody = {
   date?: unknown; // YYYY-MM-DD
+  local?: unknown;
   startTime?: unknown; // HH:mm
   endTime?: unknown; // HH:mm
   appointmentDurationMinutes?: unknown; // int
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
   }
 
   const date = typeof body.date === "string" ? body.date.trim() : "";
+  const local = typeof body.local === "string" ? body.local.trim() : "";
   const start = typeof body.startTime === "string" ? parseHHmm(body.startTime) : null;
   const end = typeof body.endTime === "string" ? parseHHmm(body.endTime) : null;
   const appointmentDurationMinutes = Number(body.appointmentDurationMinutes);
@@ -105,13 +107,14 @@ export async function POST(req: Request) {
     .insert({
       doctor_id: doctorId,
       date,
+      local: local || null,
       start_time: `${pad(start.hh)}:${pad(start.mm)}:00`,
       end_time: `${pad(end.hh)}:${pad(end.mm)}:00`,
       appointment_duration_minutes: appointmentDurationMinutes,
       interval_minutes: intervalMinutes,
       updated_at: new Date().toISOString(),
     })
-    .select("id,doctor_id,date,start_time,end_time,appointment_duration_minutes,interval_minutes,created_at,updated_at")
+    .select("id,doctor_id,date,local,start_time,end_time,appointment_duration_minutes,interval_minutes,created_at,updated_at")
     .single();
 
   if (availIns.error) return NextResponse.json({ error: availIns.error.message }, { status: 500 });
@@ -126,6 +129,7 @@ export async function POST(req: Request) {
     doctor_id: number;
     availability_id: number;
     date: string;
+    local: string | null;
     start_time: string;
     end_time: string;
     status: "available";
@@ -142,6 +146,7 @@ export async function POST(req: Request) {
       doctor_id: doctorId,
       availability_id: availabilityId,
       date,
+      local: local || null,
       start_time: `${pad(hh)}:${pad(mm)}:00`,
       end_time: `${pad(ehh)}:${pad(emm)}:00`,
       status: "available",

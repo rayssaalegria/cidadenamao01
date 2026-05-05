@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
   const res = await supabaseAdmin
     .from("available_slots")
-    .select("id,doctor_id,date,start_time,end_time,status")
+    .select("id,doctor_id,date,start_time,end_time,status,local")
     .eq("doctor_id", doctorId)
     .eq("date", date)
     .eq("status", "available")
@@ -43,6 +43,7 @@ export async function GET(req: Request) {
     start_time: String((r as any).start_time || "").slice(0, 5),
     end_time: String((r as any).end_time || "").slice(0, 5),
     status: (r as any).status,
+    local: (r as any).local || null,
   }));
 
   return NextResponse.json(out, { status: 200 });
