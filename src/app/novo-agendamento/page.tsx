@@ -961,11 +961,25 @@ export default function NovoAgendamentoPage() {
             ) : (
               <div className={`${styles.card} ${styles.cardPad24Y}`}>
                 <div className={styles.cardInner24}>
-                  <div className={styles.label10}>Médico</div>
-                  <div className={styles.value12}>Nenhum médico cadastrado para esta especialidade.</div>
-                  <div style={{ height: 6 }} />
-                  <div className={styles.label10}>Disponibilidade</div>
-                  <div className={styles.value12}>Usando agenda geral por especialidade.</div>
+                  <div className={styles.label10}>Agendamento</div>
+                  <div className={styles.value12}>Não tem agendamento disponível para esta especialidade.</div>
+                  <div style={{ height: 12 }} />
+                  <button
+                    className={styles.secondaryButton}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDoctorId(null);
+                      setSelectedDoctorNome("");
+                      setSelectedSlotId(null);
+                      setSelectedDate("");
+                      setSelectedHorario("");
+                      setSelectedLocalId(null);
+                      setSelectedLocal("");
+                      setStep("novo_tipo");
+                    }}
+                  >
+                    Fazer nova consulta
+                  </button>
                 </div>
               </div>
             )}
@@ -973,7 +987,7 @@ export default function NovoAgendamentoPage() {
             <button
               className={styles.primaryButton}
               type="button"
-              disabled={medicosByEspecialidade.length ? !selectedDoctorId : false}
+              disabled={medicosByEspecialidade.length ? !selectedDoctorId : true}
               onClick={() => setStep("novo_data")}
             >
               Continuar
