@@ -120,6 +120,12 @@ function fmtShortDateTimeBr(iso: string) {
   return `${dd}/${mm}/${yyyy}, ${hh}:${min}`;
 }
 
+function fmtShortDateBr(iso: string) {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
 function fmtShortRange(fromIso: string, toIso: string) {
   const [fy, fm, fd] = fromIso.split("-");
   const [ty, tm, td] = toIso.split("-");
@@ -150,6 +156,8 @@ export default function MinhasSolicitacoesPage() {
   const [appliedTipos, setAppliedTipos] = useState<string[]>([]);
 
   const sheetRef = useRef<HTMLDivElement | null>(null);
+  const fromInputRef = useRef<HTMLInputElement | null>(null);
+  const toInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const urlToken = getTokenFromUrl();
@@ -347,6 +355,18 @@ export default function MinhasSolicitacoesPage() {
     setDraftTipos([]);
   }
 
+  function openDatePicker(which: "from" | "to") {
+    const el = which === "from" ? fromInputRef.current : toInputRef.current;
+    if (!el) return;
+    try {
+      (el as unknown as { showPicker?: () => void }).showPicker?.();
+    } catch {
+      // ignore
+    }
+    el.focus();
+    el.click();
+  }
+
   return (
     <div className={styles.page}>
       {error ? <div className={styles.error}>{error}</div> : null}
@@ -469,14 +489,38 @@ export default function MinhasSolicitacoesPage() {
             <div className={styles.sheetSection}>
               <div className={styles.sectionTitle}>Data</div>
               <div className={styles.dateRow}>
-                <label className={styles.dateField}>
+                <div className={styles.dateField} role="button" tabIndex={0} onClick={() => openDatePicker("from")} onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") openDatePicker("from");
+                }}>
                   <div className={styles.dateLabel}>De</div>
-                  <input className={styles.dateInput} type="date" value={draftFrom} onChange={(e) => setDraftFrom(e.target.value)} />
-                </label>
-                <label className={styles.dateField}>
+                  <div className={[styles.dateValue, !draftFrom ? styles.dateValuePlaceholder : ""].filter(Boolean).join(" ")}>
+                    {draftFrom ? fmtShortDateBr(draftFrom) : "—"}
+                  </div>
+                  <input
+                    ref={fromInputRef}
+                    className={styles.dateInputHidden}
+                    type="date"
+                    value={draftFrom}
+                    onChange={(e) => setDraftFrom(e.target.value)}
+                    aria-label="Data inicial"
+                  />
+                </div>
+                <div className={styles.dateField} role="button" tabIndex={0} onClick={() => openDatePicker("to")} onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") openDatePicker("to");
+                }}>
                   <div className={styles.dateLabel}>Até</div>
-                  <input className={styles.dateInput} type="date" value={draftTo} onChange={(e) => setDraftTo(e.target.value)} />
-                </label>
+                  <div className={[styles.dateValue, !draftTo ? styles.dateValuePlaceholder : ""].filter(Boolean).join(" ")}>
+                    {draftTo ? fmtShortDateBr(draftTo) : "—"}
+                  </div>
+                  <input
+                    ref={toInputRef}
+                    className={styles.dateInputHidden}
+                    type="date"
+                    value={draftTo}
+                    onChange={(e) => setDraftTo(e.target.value)}
+                    aria-label="Data final"
+                  />
+                </div>
               </div>
             </div>
 

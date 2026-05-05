@@ -353,6 +353,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
+  cursor: pointer;
 }
 
 .dateLabel {
@@ -361,14 +363,22 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.dateInput {
-  border: 0;
-  background: transparent;
-  outline: none;
+.dateValue {
   color: #1a1a1a;
   font-size: 14px;
   font-weight: 500;
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.dateValuePlaceholder {
+  color: #a2a2a7;
+}
+
+.dateInputHidden {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .tipoGrid {
