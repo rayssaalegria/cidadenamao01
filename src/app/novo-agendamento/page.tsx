@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SasiMeResponse } from "@/lib/sasi";
+import { getSasiChannelIdFromClient } from "@/lib/sasiChannel";
 import { QrCode, X } from "lucide-react";
 import styles from "./page.module.css";
 
@@ -720,14 +721,7 @@ export default function NovoAgendamentoPage() {
 
       // Monitoramento SASI: novo-agendamento -> SASI Mobile Messages
       const notifyTest = (process.env.NEXT_PUBLIC_SASI_NOTIFY_TEST || "").trim().toLowerCase() === "true";
-      const channelIdFromEnv = Number(process.env.NEXT_PUBLIC_SASI_CHANNEL_ID || "");
-      const channelIdFromUrl = Number(new URL(window.location.href).searchParams.get("channelId") || "");
-      const channelId =
-        Number.isFinite(channelIdFromUrl) && channelIdFromUrl > 0
-          ? channelIdFromUrl
-          : Number.isFinite(channelIdFromEnv) && channelIdFromEnv > 0
-            ? channelIdFromEnv
-            : 27328;
+      const channelId = getSasiChannelIdFromClient(27328);
       const profileId = profileIdFromUrl || me?.id || "";
       if (profileId && json.row) {
         void fetch("/api/sasi/mobile-messages", {

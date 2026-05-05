@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { SasiMeResponse } from "@/lib/sasi";
+import { getSasiChannelIdFromClient } from "@/lib/sasiChannel";
 import { QrCode, X } from "lucide-react";
 import styles from "./page.module.css";
 
@@ -611,8 +612,9 @@ export default function AgendamentosPage() {
       const json = (await res.json()) as { ok?: boolean; error?: string; row?: AgendamentoRow };
       if (!res.ok) throw new Error(json.error || "Falha ao confirmar agendamento");
 
-      // Monitoramento SASI: novo-exame -> SASI Mobile Messages (ChannelId 28135)
+      // Monitoramento SASI: novo-exame -> SASI Mobile Messages
       const notifyTest = (process.env.NEXT_PUBLIC_SASI_NOTIFY_TEST || "").trim().toLowerCase() === "true";
+      const channelId = getSasiChannelIdFromClient(28135);
       const profileId = profileIdFromUrl || me?.id || "";
       if (profileId && json.row) {
         void fetch("/api/sasi/mobile-messages", {
@@ -626,7 +628,7 @@ export default function AgendamentosPage() {
               text: "",
               data: json.row,
               test: notifyTest,
-              ChannelId: 28135,
+              ChannelId: channelId,
               generatedAt: new Date().toISOString(),
               attachments: [],
               anonymous: false,
