@@ -184,7 +184,7 @@ type AgendamentoRow = {
   qr_code: string | null;
 };
 
-type FlowStep = "lista" | "novo_tipo" | "novo_data" | "novo_horario";
+type FlowStep = "lista" | "novo_tipo" | "novo_medico" | "novo_data" | "novo_horario";
 
 type DisponSlot = { id: number; time: string; localId: number | null; local: string };
 
@@ -668,6 +668,9 @@ export default function NovoAgendamentoPage() {
     setSelectedHorario("");
     setSelectedLocalId(null);
     setSelectedLocal("");
+    setSelectedDoctorId(null);
+    setSelectedDoctorNome("");
+    setSelectedSlotId(null);
     setSheetOpen(false);
     setStep("novo_tipo");
   }
@@ -678,7 +681,8 @@ export default function NovoAgendamentoPage() {
       return;
     }
     if (step === "novo_horario") setStep("novo_data");
-    else if (step === "novo_data") setStep("novo_tipo");
+    else if (step === "novo_data") setStep("novo_medico");
+    else if (step === "novo_medico") setStep("novo_tipo");
     else setStep("lista");
   }
 
@@ -904,7 +908,7 @@ export default function NovoAgendamentoPage() {
                   onClick={() => {
                     const defaultOpt = ESPECIALIDADES.options.find((o) => "isDefaultRedirect" in o && (o as any).isDefaultRedirect);
                     if (!especialidadeValue && defaultOpt) pickEspecialidade(defaultOpt);
-                    setStep("novo_data");
+                    setStep("novo_medico");
                   }}
                 >
                   Continuar
@@ -914,7 +918,7 @@ export default function NovoAgendamentoPage() {
           </>
         ) : null}
 
-        {step === "novo_data" ? (
+        {step === "novo_medico" ? (
           <>
             <div className={`${styles.card} ${styles.cardPad24Y}`}>
               <div className={styles.cardInner24}>
@@ -965,6 +969,35 @@ export default function NovoAgendamentoPage() {
                 </div>
               </div>
             )}
+
+            <button
+              className={styles.primaryButton}
+              type="button"
+              disabled={medicosByEspecialidade.length ? !selectedDoctorId : false}
+              onClick={() => setStep("novo_data")}
+            >
+              Continuar
+            </button>
+          </>
+        ) : null}
+
+        {step === "novo_data" ? (
+          <>
+            <div className={`${styles.card} ${styles.cardPad24Y}`}>
+              <div className={styles.cardInner24}>
+                <div className={styles.label10}>Especialidade</div>
+                <div className={styles.value12}>{selectedEspecialidadeText || "-"}</div>
+              </div>
+            </div>
+
+            {selectedDoctorId ? (
+              <div className={`${styles.card} ${styles.cardPad24Y}`}>
+                <div className={styles.cardInner24}>
+                  <div className={styles.label10}>Médico</div>
+                  <div className={styles.value12}>{selectedDoctorNome || "-"}</div>
+                </div>
+              </div>
+            ) : null}
 
             <div className={`${styles.card} ${styles.cardPad16}`}>
               <div className={styles.calendarTitle}>Selecione uma data</div>
@@ -1043,7 +1076,7 @@ export default function NovoAgendamentoPage() {
             <button
               className={styles.primaryButton}
               type="button"
-              disabled={(medicosByEspecialidade.length ? !selectedDoctorId : false) || !selectedDate || loadingDispon}
+              disabled={!selectedDate || loadingDispon}
               onClick={() => setStep("novo_horario")}
             >
               Continuar
