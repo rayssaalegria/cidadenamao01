@@ -1,0 +1,253 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ds-text-primary);
+}
+
+.subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ds-text-tertiary);
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ds-text-secondary);
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ds-text-secondary);
+  user-select: none;
+}
+
+.actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primaryBtn {
+  height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: #33a13c;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0 14px;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(195, 201, 232, 0.6);
+  background: rgba(195, 201, 232, 0.12);
+  color: var(--ds-text-secondary);
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0 12px;
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.smallBtn {
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgba(195, 201, 232, 0.6);
+  background: rgba(195, 201, 232, 0.12);
+  color: var(--ds-text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.smallBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.muted {
+  color: var(--ds-text-tertiary);
+  font-size: 12px;
+}
+
+.error {
+  padding: 12px 16px;
+  color: #b00020;
+  background: #fff5f5;
+  border: 1px solid #ffd6d6;
+  border-radius: 10px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  border: 1px solid rgba(195, 201, 232, 0.35);
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.itemTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ds-text-primary);
+}
+
+.badges {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(195, 201, 232, 0.8);
+  color: #232d64;
+  background: rgba(195, 201, 232, 0.18);
+  white-space: nowrap;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  font-size: 12px;
+  color: #374151;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 11, 13, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal {
+  width: min(680px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid rgba(195, 201, 232, 0.6);
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(195, 201, 232, 0.35);
+}
+
+.modalTitle {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ds-text-primary);
+}
+
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(195, 201, 232, 0.6);
+  background: rgba(195, 201, 232, 0.12);
+  cursor: pointer;
+  font-weight: 900;
+  color: var(--ds-text-secondary);
+}
+
+.modal :global(.ds-control) {
+  width: 100%;
+}
+
+.modal .grid {
+  padding: 16px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(195, 201, 232, 0.35);
+}
+
+@media (min-width: 820px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .metaRow {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+  }
+}
+

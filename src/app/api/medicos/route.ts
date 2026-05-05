@@ -7,6 +7,8 @@ type MedicoRow = {
   nome: string;
   crm: string;
   especialidade: string | null;
+  email?: string | null;
+  telefone?: string | null;
   ativo: boolean;
 };
 
@@ -14,6 +16,8 @@ type CreateBody = {
   nome?: unknown;
   crm?: unknown;
   especialidade?: unknown;
+  email?: unknown;
+  telefone?: unknown;
   ativo?: unknown;
 };
 
@@ -28,7 +32,7 @@ export async function GET() {
 
   const res = await supabaseAdmin
     .from("medicos")
-    .select("id,created_at,nome,crm,especialidade,ativo")
+    .select("id,created_at,nome,crm,especialidade,email,telefone,ativo")
     .order("created_at", { ascending: false });
 
   if (res.error) return NextResponse.json({ error: res.error.message }, { status: 500 });
@@ -54,6 +58,8 @@ export async function POST(req: Request) {
   const nome = typeof body.nome === "string" ? body.nome.trim() : "";
   const crm = typeof body.crm === "string" ? body.crm.trim() : "";
   const especialidade = typeof body.especialidade === "string" ? body.especialidade.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const telefone = typeof body.telefone === "string" ? body.telefone.trim() : "";
   const ativo = typeof body.ativo === "boolean" ? body.ativo : true;
 
   if (!nome || !crm) {
@@ -66,9 +72,11 @@ export async function POST(req: Request) {
       nome,
       crm,
       especialidade: especialidade || null,
+      email: email || null,
+      telefone: telefone || null,
       ativo,
     })
-    .select("id,created_at,nome,crm,especialidade,ativo")
+    .select("id,created_at,nome,crm,especialidade,email,telefone,ativo")
     .single();
 
   if (insert.error) {
