@@ -5,10 +5,8 @@ import styles from "./page.module.css";
 import type { SasiMeResponse } from "@/lib/sasi";
 
 const defaultProfilePhoto = "/avatar-default.svg";
-const imgImage1585 =
-  "https://www.figma.com/api/mcp/asset/f1c34dd9-8fc5-43d7-94e0-bd66712f7bcc";
-const imgVector =
-  "https://www.figma.com/api/mcp/asset/bb94ae8c-fa9f-4909-9a97-0634d198f61e";
+const manausLogoSrc = "/prefeitura-manaus-logo.png";
+const editIconSrc = "/meus-dados-edit-icon.png";
 
 type EditableDraft = {
   dataNascimento: string;
@@ -31,7 +29,6 @@ type EditableDraft = {
 };
 
 const DRAFT_STORAGE_KEY = "meus-dados:overrides:v1";
-const PHOTO_STORAGE_KEY = "meus-dados:photo:v1";
 const NOTIFY_SESSION_UUID_KEY = "meus-dados:notify-session-uuid:v1";
 
 function getOrCreateNotifySessionUuid() {
@@ -293,6 +290,9 @@ export default function MeusDadosPage() {
   }, [me]);
 
   const cpf = me?.profileProps?.cpf || "";
+  const profileKey = useMemo(() => (me?.id || cpf || "anon").trim() || "anon", [me?.id, cpf]);
+  const draftStorageKey = useMemo(() => `${DRAFT_STORAGE_KEY}:${profileKey}`, [profileKey]);
+  const photoStorageKey = useMemo(() => `meus-dados:photo:v1:${profileKey}`, [profileKey]);
 
   const qrPayload = useMemo(() => {
     if (!cpf || !fullName) return "";
@@ -377,15 +377,15 @@ export default function MeusDadosPage() {
 
   // Carrega overrides e foto do localStorage (persistência local do aparelho)
   useEffect(() => {
-    const savedDraft = safeParseJson<Partial<EditableDraft>>(localStorage.getItem(DRAFT_STORAGE_KEY));
-    const savedPhoto = localStorage.getItem(PHOTO_STORAGE_KEY);
+    const savedDraft = safeParseJson<Partial<EditableDraft>>(localStorage.getItem(draftStorageKey));
+    const savedPhoto = localStorage.getItem(photoStorageKey);
     // evita setState síncrono no effect (lint)
     setTimeout(() => {
       if (savedPhoto) setProfilePhoto(savedPhoto);
       setDraft({ ...baseDraft, ...(savedDraft || {}) });
     }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseDraft]);
+  }, [baseDraft, draftStorageKey, photoStorageKey]);
 
   function startEditing() {
     setMenuOpen(false);
@@ -396,14 +396,14 @@ export default function MeusDadosPage() {
   function cancelEditing() {
     setMenuOpen(false);
     setIsEditing(false);
-    const savedDraft = safeParseJson<Partial<EditableDraft>>(localStorage.getItem(DRAFT_STORAGE_KEY));
+    const savedDraft = safeParseJson<Partial<EditableDraft>>(localStorage.getItem(draftStorageKey));
     setDraft({ ...baseDraft, ...(savedDraft || {}) });
   }
 
   function saveEditing() {
     if (!draft) return;
     try {
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      localStorage.setItem(draftStorageKey, JSON.stringify(draft));
     } catch {
       // ignore
     }
@@ -483,7 +483,7 @@ export default function MeusDadosPage() {
       });
       if (!dataUrl) return;
       setProfilePhoto(dataUrl);
-      localStorage.setItem(PHOTO_STORAGE_KEY, dataUrl);
+      localStorage.setItem(photoStorageKey, dataUrl);
     } catch {
       setError("Não foi possível carregar a imagem.");
     }
@@ -497,7 +497,7 @@ export default function MeusDadosPage() {
         <div className={styles.headerGradient} />
         <div className={styles.headerStripe} />
 
-        <img className={styles.logo} src={imgImage1585} alt="Prefeitura de Manaus" />
+        <img className={styles.logo} src={manausLogoSrc} alt="Prefeitura de Manaus" />
 
         <div className={styles.photoWrap}>
           <img className={styles.photo} src={profilePhoto} alt="Foto do perfil" />
@@ -510,7 +510,7 @@ export default function MeusDadosPage() {
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((v) => !v)}
         >
-          <img src={imgVector} alt="" width={24} height={24} />
+          <img src={editIconSrc} alt="" width={24} height={24} />
         </button>
 
         {menuOpen ? (
