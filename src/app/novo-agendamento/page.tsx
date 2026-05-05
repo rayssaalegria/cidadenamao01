@@ -518,19 +518,33 @@ export default function NovoAgendamentoPage() {
         // Carrega médicos ativos e filtra pela especialidade (label)
         const selectedText =
           especialidadeLabel || ESPECIALIDADES.options.find((o) => o.value === especialidadeValue)?.label || especialidadeValue;
-        const target = String(selectedText || "").trim().toLowerCase();
+        const targetLabel = String(selectedText || "").trim().toLowerCase();
+        const targetValue = String(especialidadeValue || "").trim().toLowerCase();
 
         const medRes = await fetch("/api/medicos", { cache: "no-store" });
         const medJson = (await medRes.json()) as { data?: MedicoRow[]; error?: string };
         if (!medRes.ok) throw new Error(medJson.error || "Falha ao carregar médicos");
 
-        const filtered = (medJson.data || []).filter(
-          (m) => m?.ativo && String(m.especialidade || "").trim().toLowerCase() === target,
-        );
+        const filtered = (medJson.data || []).filter((m) => {
+          if (!m?.ativo) return false;
+          const esp = String(m.especialidade || "").trim().toLowerCase();
+          if (!esp) return false;
+          // Aceita match por label OU por value, para reduzir problemas de divergência de texto.
+          return esp === targetLabel || esp === targetValue;
+        });
         if (!cancelled) setMedicosByEspecialidade(filtered);
 
-        // Datas disponíveis: se já escolheu médico, vêm dos slots dele; senão, mantém o calendário legado
-        if (selectedDoctorId) {
+        // Se o médico selecionado não existe mais no filtro, reseta para usar disponibilidade legada.
+        if (!cancelled && selectedDoctorId && !filtered.some((m) => m.id === selectedDoctorId)) {
+          setSelectedDoctorId(null);
+          setSelectedDoctorNome("");
+          setSelectedSlotId(null);
+        }
+
+        // Datas disponíveis:
+        // - se já escolheu médico (e existe médico na especialidade), vêm dos slots dele
+        // - senão, mantém o calendário legado por especialidade_disponibilidade
+        if (selectedDoctorId && filtered.length) {
           const datesRes = await fetch(
             `/api/doctors/${encodeURIComponent(String(selectedDoctorId))}/available-dates?month=${encodeURIComponent(selectedMonth)}`,
             { cache: "no-store" },
@@ -909,36 +923,48 @@ export default function NovoAgendamentoPage() {
               </div>
             </div>
 
-            <div className={`${styles.card} ${styles.cardPad24Y}`}>
-              <div className={`${styles.cardInner24} ${styles.inputBlock}`}>
-                <div className={styles.inputLabel}>Médico</div>
-                <select
-                  className="ds-control ds-md"
-                  value={selectedDoctorId ? String(selectedDoctorId) : ""}
-                  onChange={(e) => {
-                    const id = Number(e.target.value || "");
-                    const nextId = Number.isFinite(id) && id > 0 ? id : null;
-                    setSelectedDoctorId(nextId);
-                    const m = medicosByEspecialidade.find((x) => x.id === nextId);
-                    setSelectedDoctorNome(m?.nome || "");
-                    // reset da seleção de agenda
-                    setSelectedDate("");
-                    setSelectedHorario("");
-                    setSelectedLocalId(null);
-                    setSelectedLocal("");
-                    setSelectedSlotId(null);
-                  }}
-                >
-                  <option value="">{loadingDispon ? "Carregando..." : "Selecione um médico"}</option>
-                  {medicosByEspecialidade.map((m) => (
-                    <option key={m.id} value={String(m.id)}>
-                      {m.nome} • {m.crm}
-                    </option>
-                  ))}
-                </select>
-                <div className="ds-hint">Mostrando apenas médicos ativos dessa especialidade.</div>
+            {medicosByEspecialidade.length ? (
+              <div className={`${styles.card} ${styles.cardPad24Y}`}>
+                <div className={`${styles.cardInner24} ${styles.inputBlock}`}>
+                  <div className={styles.inputLabel}>Médico</div>
+                  <select
+                    className="ds-control ds-md"
+                    value={selectedDoctorId ? String(selectedDoctorId) : ""}
+                    onChange={(e) => {
+                      const id = Number(e.target.value || "");
+                      const nextId = Number.isFinite(id) && id > 0 ? id : null;
+                      setSelectedDoctorId(nextId);
+                      const m = medicosByEspecialidade.find((x) => x.id === nextId);
+                      setSelectedDoctorNome(m?.nome || "");
+                      // reset da seleção de agenda
+                      setSelectedDate("");
+                      setSelectedHorario("");
+                      setSelectedLocalId(null);
+                      setSelectedLocal("");
+                      setSelectedSlotId(null);
+                    }}
+                  >
+                    <option value="">{loadingDispon ? "Carregando..." : "Selecione um médico"}</option>
+                    {medicosByEspecialidade.map((m) => (
+                      <option key={m.id} value={String(m.id)}>
+                        {m.nome} • {m.crm}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="ds-hint">Mostrando apenas médicos ativos dessa especialidade.</div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className={`${styles.card} ${styles.cardPad24Y}`}>
+                <div className={styles.cardInner24}>
+                  <div className={styles.label10}>Médico</div>
+                  <div className={styles.value12}>Nenhum médico cadastrado para esta especialidade.</div>
+                  <div style={{ height: 6 }} />
+                  <div className={styles.label10}>Disponibilidade</div>
+                  <div className={styles.value12}>Usando agenda geral por especialidade.</div>
+                </div>
+              </div>
+            )}
 
             <div className={`${styles.card} ${styles.cardPad16}`}>
               <div className={styles.calendarTitle}>Selecione uma data</div>
@@ -1017,7 +1043,7 @@ export default function NovoAgendamentoPage() {
             <button
               className={styles.primaryButton}
               type="button"
-              disabled={!selectedDoctorId || !selectedDate || loadingDispon}
+              disabled={(medicosByEspecialidade.length ? !selectedDoctorId : false) || !selectedDate || loadingDispon}
               onClick={() => setStep("novo_horario")}
             >
               Continuar
