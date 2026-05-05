@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SasiMeResponse } from "@/lib/sasi";
-import { QrCode, X } from "lucide-react";
+import { CheckSquare2, ChevronLeft, Inbox, Search, SlidersHorizontal, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 
 const defaultProfilePhoto = "/avatar-default.svg";
@@ -94,50 +95,58 @@ type DadosUsuariosRow = {
   profile_photo: string | null;
 };
 
-type AgendamentoRow = {
+type SolicitacaoRow = {
   id: number;
   created_at: string;
-  nome_completo?: string | null;
-  especialidade_agendar: string | null;
-  tipo?: string | null;
-  data_consulta_date: string | null;
-  horario_consulta_time: string | null;
-  local_consulta: string | null;
+  titulo: string | null;
+  descricao: string | null;
+  tipo: string | null;
   status: string | null;
 };
 
-function fmtCpf(cpf: string) {
-  const d = cpf.replace(/\D/g, "");
-  if (d.length !== 11) return cpf;
-  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+type TabKey = "Em andamento" | "Concluídas";
+
+function fmtShortDateTimeBr(iso: string) {
+  const dt = new Date(iso);
+  if (!Number.isFinite(dt.getTime())) return iso;
+  const dd = String(dt.getDate()).padStart(2, "0");
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+  const hh = String(dt.getHours()).padStart(2, "0");
+  const min = String(dt.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${yyyy}, ${hh}:${min}`;
 }
 
-function fmtSus(sus: string) {
-  const d = sus.replace(/\D/g, "");
-  if (d.length < 10) return sus;
-  return d.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-}
-
-function fmtDateBr(iso: string) {
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+function fmtShortRange(fromIso: string, toIso: string) {
+  const [fy, fm, fd] = fromIso.split("-");
+  const [ty, tm, td] = toIso.split("-");
+  if (!fy || !fm || !fd || !ty || !tm || !td) return `${fromIso} – ${toIso}`;
+  return `${fd}/${fm} – ${td}/${tm}`;
 }
 
 export default function MinhasSolicitacoesPage() {
+  const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [me, setMe] = useState<SasiMeResponse | null>(null);
   const [dados, setDados] = useState<DadosUsuariosRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [items, setItems] = useState<AgendamentoRow[]>([]);
+  const [tab, setTab] = useState<TabKey>("Em andamento");
+  const [items, setItems] = useState<SolicitacaoRow[]>([]);
   const [loadingList, setLoadingList] = useState(false);
 
-  const [qrOpen, setQrOpen] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [qrStatus, setQrStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
-  const [qrError, setQrError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState("");
+  const [draftTo, setDraftTo] = useState("");
+  const [draftTipos, setDraftTipos] = useState<string[]>([]);
+
+  const [appliedFrom, setAppliedFrom] = useState("");
+  const [appliedTo, setAppliedTo] = useState("");
+  const [appliedTipos, setAppliedTipos] = useState<string[]>([]);
+
+  const sheetRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const urlToken = getTokenFromUrl();
@@ -169,65 +178,6 @@ export default function MinhasSolicitacoesPage() {
   const rg = useMemo(() => (dados?.draft_overrides?.rg || me?.profileProps?.documento_rg || "").trim(), [dados, me]);
   const sus = useMemo(() => (dados?.draft_overrides?.sus || me?.profileProps?.documento_sus || "").trim(), [dados, me]);
   const photo = useMemo(() => dados?.profile_photo || defaultProfilePhoto, [dados]);
-
-  const qrPayload = useMemo(() => {
-    if (!cpf || !fullName) return "";
-    return JSON.stringify({
-      cpf,
-      nome: fullName,
-      carteiraSus: sus || null,
-      qrCode: me?.customProps?.code || null,
-    });
-  }, [cpf, fullName, sus, me]);
-
-  useEffect(() => {
-    if (!qrOpen) return;
-
-    let cancelled = false;
-    async function run() {
-      if (!qrPayload) {
-        setQrStatus("error");
-        setQrError(!cpf ? "CPF não encontrado" : "Nome não encontrado");
-        setQrDataUrl(null);
-        return;
-      }
-      try {
-        setQrStatus("loading");
-        setQrError(null);
-        const mod = await import("qrcode");
-        const QRCode = ("default" in mod ? (mod.default as typeof mod) : mod) as unknown as {
-          toDataURL: (
-            text: string,
-            options?: { width?: number; margin?: number; errorCorrectionLevel?: "L" | "M" | "Q" | "H" },
-          ) => Promise<string>;
-        };
-        const url = await QRCode.toDataURL(qrPayload, { width: 260, margin: 1, errorCorrectionLevel: "M" });
-        if (!cancelled) {
-          setQrDataUrl(url);
-          setQrStatus("ready");
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setQrDataUrl(null);
-          setQrStatus("error");
-          setQrError(e instanceof Error ? e.message : "Falha ao gerar QR");
-        }
-      }
-    }
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [qrOpen, qrPayload, cpf]);
-
-  useEffect(() => {
-    if (!qrOpen) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setQrOpen(false);
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [qrOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -276,20 +226,22 @@ export default function MinhasSolicitacoesPage() {
   useEffect(() => {
     let cancelled = false;
     async function run() {
-      if (!cpf && !token) return;
+      const cpf = (me?.profileProps?.cpf || dados?.cpf || "").trim();
+      if (!cpf) return;
       setLoadingList(true);
       try {
         const qs = new URLSearchParams();
-        if (cpf) qs.set("cpf", cpf);
-        const res = await fetch(`/api/agendamentos?${qs.toString()}`, {
+        qs.set("cpf", cpf);
+        if (tab === "Concluídas") qs.set("status", "Concluída");
+        else qs.set("status", "Em andamento");
+        const res = await fetch(`/api/solicitacoes?${qs.toString()}`, {
           cache: "no-store",
-          headers: token ? { "x-sasi-token": token } : undefined,
         });
-        const json = (await res.json()) as { data?: AgendamentoRow[]; error?: string };
-        if (!res.ok) throw new Error(json.error || "Falha ao carregar agendamentos");
+        const json = (await res.json()) as { data?: SolicitacaoRow[]; error?: string };
+        if (!res.ok) throw new Error(json.error || "Falha ao carregar solicitações");
         if (!cancelled) setItems(json.data || []);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar agendamentos");
+        if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar solicitações");
       } finally {
         if (!cancelled) setLoadingList(false);
       }
@@ -298,102 +250,264 @@ export default function MinhasSolicitacoesPage() {
     return () => {
       cancelled = true;
     };
-  }, [cpf, token]);
+  }, [me, dados, tab]);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setFilterOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [filterOpen]);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    function onDown(e: MouseEvent | TouchEvent) {
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (sheetRef.current && sheetRef.current.contains(t)) return;
+      setFilterOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+    };
+  }, [filterOpen]);
+
+  const hasAppliedFilters = Boolean((appliedFrom && appliedTo) || appliedTipos.length);
+  const filteredItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((it) => {
+      if (q) {
+        const hay = `${it.titulo || ""}\n${it.descricao || ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (appliedTipos.length) {
+        const tipo = String(it.tipo || "").trim();
+        if (!tipo) return false;
+        const ok = appliedTipos.some((t) => t.toLowerCase() === tipo.toLowerCase());
+        if (!ok) return false;
+      }
+      if (appliedFrom && appliedTo) {
+        const created = new Date(it.created_at).getTime();
+        const from = new Date(appliedFrom + "T00:00:00").getTime();
+        const to = new Date(appliedTo + "T23:59:59").getTime();
+        if (Number.isFinite(created) && (created < from || created > to)) return false;
+      }
+      return true;
+    });
+  }, [items, query, appliedFrom, appliedTo, appliedTipos]);
+
+  function tipoLabel(tipo: string) {
+    const t = tipo.trim().toLowerCase();
+    if (t === "denuncia" || t === "denúncia") return "Denúncia";
+    if (t === "sugestao" || t === "sugestão") return "Sugestão";
+    if (t === "solicitacao" || t === "solicitação") return "Solicitação";
+    if (t === "reclamacao" || t === "reclamação") return "Reclamação";
+    if (t === "elogio") return "Elogio";
+    return tipo.trim() || "Solicitação";
+  }
+
+  function tipoClass(tipo: string) {
+    const t = tipo.trim().toLowerCase();
+    if (t === "denuncia" || t === "denúncia") return styles.badgeTipoDenuncia;
+    if (t === "sugestao" || t === "sugestão") return styles.badgeTipoSugestao;
+    if (t === "solicitacao" || t === "solicitação") return styles.badgeTipoSolicitacao;
+    return styles.badgeTipoNeutra;
+  }
+
+  function toggleDraftTipo(next: string) {
+    setDraftTipos((prev) => {
+      const has = prev.some((x) => x.toLowerCase() === next.toLowerCase());
+      if (has) return prev.filter((x) => x.toLowerCase() !== next.toLowerCase());
+      return [...prev, next];
+    });
+  }
+
+  function openFilter() {
+    setDraftFrom(appliedFrom);
+    setDraftTo(appliedTo);
+    setDraftTipos(appliedTipos);
+    setFilterOpen(true);
+  }
+
+  function applyFilters() {
+    setAppliedFrom(draftFrom);
+    setAppliedTo(draftTo);
+    setAppliedTipos(draftTipos);
+    setFilterOpen(false);
+  }
+
+  function clearFilters() {
+    setDraftFrom("");
+    setDraftTo("");
+    setDraftTipos([]);
+  }
 
   return (
     <div className={styles.page}>
       {error ? <div className={styles.error}>{error}</div> : null}
 
       <main className={styles.content} aria-busy={loading || loadingList}>
-        <section className={`${styles.card} ${styles.cardPad24Y}`}>
-          <div className={styles.userRow}>
-            <div className={styles.avatar}>
-              <img className={styles.avatarImg} src={photo} alt="" />
-            </div>
-            <div className={styles.userMeta}>
-              <div className={styles.label10}>Nome Completo:</div>
-              <div className={styles.value12}>{loading ? "Carregando..." : fullName || "-"}</div>
-            </div>
-            <button className={styles.qrButton} type="button" aria-label="Ver QR Code" onClick={() => setQrOpen(true)}>
-              <QrCode size={18} aria-hidden="true" />
-            </button>
-          </div>
-          <div className={styles.fieldRow}>
-            <div className={styles.label10}>RG:</div>
-            <div className={styles.fieldValue}>{rg || "-"}</div>
-          </div>
-          <div className={styles.fieldRow}>
-            <div className={styles.label10}>CPF:</div>
-            <div className={styles.fieldValue}>{cpf ? fmtCpf(cpf) : "-"}</div>
-          </div>
-          <div className={styles.fieldRow}>
-            <div className={styles.label10}>Carteirinha do SUS:</div>
-            <div className={styles.fieldValue}>{sus ? fmtSus(sus) : "-"}</div>
-          </div>
-        </section>
+        <header className={styles.header}>
+          <button className={styles.backButton} type="button" onClick={() => router.back()} aria-label="Voltar">
+            <ChevronLeft size={18} aria-hidden="true" />
+          </button>
+          <div className={styles.headerTitle}>Minhas solicitações</div>
+        </header>
 
-        <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className={styles.segmented} role="tablist" aria-label="Status das solicitações">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "Em andamento"}
+            className={[styles.segment, tab === "Em andamento" ? styles.segmentActive : ""].filter(Boolean).join(" ")}
+            onClick={() => setTab("Em andamento")}
+          >
+            <Inbox size={18} aria-hidden="true" />
+            <span>Em andamento</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "Concluídas"}
+            className={[styles.segment, tab === "Concluídas" ? styles.segmentActive : ""].filter(Boolean).join(" ")}
+            onClick={() => setTab("Concluídas")}
+          >
+            <CheckSquare2 size={18} aria-hidden="true" />
+            <span>Concluídas</span>
+          </button>
+        </div>
+
+        <div className={styles.searchRow}>
+          <label className={styles.searchBox}>
+            <Search size={16} aria-hidden="true" />
+            <input
+              className={styles.searchInput}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Pesquisar"
+              aria-label="Pesquisar"
+            />
+          </label>
+          <button
+            type="button"
+            className={[styles.filterButton, hasAppliedFilters ? styles.filterButtonActive : ""].filter(Boolean).join(" ")}
+            onClick={openFilter}
+          >
+            <SlidersHorizontal size={16} aria-hidden="true" />
+            <span>Filtrar</span>
+          </button>
+        </div>
+
+        {hasAppliedFilters ? (
+          <div className={styles.chipsRow} aria-label="Filtros aplicados">
+            {appliedTipos.map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={[styles.appliedChip, tipoClass(t)].join(" ")}
+                onClick={() => setAppliedTipos((prev) => prev.filter((x) => x.toLowerCase() !== t.toLowerCase()))}
+              >
+                <span>{tipoLabel(t)}</span>
+                <X size={14} aria-hidden="true" />
+              </button>
+            ))}
+            {appliedFrom && appliedTo ? (
+              <button type="button" className={[styles.appliedChip, styles.appliedChipDate].join(" ")} onClick={openFilter}>
+                <span>{fmtShortRange(appliedFrom, appliedTo)}</span>
+                <X size={14} aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        <section className={styles.list} aria-label="Lista de solicitações">
           {loadingList ? (
-            <div style={{ color: "#8f9bb3" }}>Carregando…</div>
-          ) : items.length ? (
-            items.map((c) => (
-              <div key={c.id} className={`${styles.card} ${styles.apptCard}`}>
-                <div className={styles.apptTitle}>{c.especialidade_agendar || "-"}</div>
-                <div style={{ height: 16 }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div className={styles.fieldRow} style={{ padding: 0 }}>
-                    <div className={styles.label10}>Tipo:</div>
-                    <div className={styles.fieldValue}>{c.tipo === "exame" ? "Exame" : "Consulta"}</div>
-                  </div>
-                  <div className={styles.fieldRow} style={{ padding: 0 }}>
-                    <div className={styles.label10}>Status:</div>
-                    <div className={styles.fieldValue}>{c.status || "-"}</div>
-                  </div>
-                  <div className={styles.fieldRow} style={{ padding: 0 }}>
-                    <div className={styles.label10}>Local:</div>
-                    <div className={styles.fieldValue}>{c.local_consulta || "-"}</div>
-                  </div>
-                  <div className={styles.fieldRow} style={{ padding: 0 }}>
-                    <div className={styles.label10}>Data:</div>
-                    <div className={styles.fieldValue}>{c.data_consulta_date ? fmtDateBr(c.data_consulta_date) : "-"}</div>
-                  </div>
-                  <div className={styles.fieldRow} style={{ padding: 0 }}>
-                    <div className={styles.label10}>Horário:</div>
-                    <div className={styles.fieldValue}>{c.horario_consulta_time?.slice(0, 5) || "-"}</div>
+            <div className={styles.muted}>Carregando…</div>
+          ) : filteredItems.length ? (
+            filteredItems.map((it) => (
+              <article key={it.id} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <div className={styles.cardTitle}>{it.titulo || "-"}</div>
+                  <div className={[styles.badgeTipo, tipoClass(it.tipo || "")].join(" ")}>
+                    {tipoLabel(it.tipo || "")}
                   </div>
                 </div>
-              </div>
+                <div className={styles.cardDesc}>{it.descricao || ""}</div>
+                <div className={styles.cardBottom}>
+                  <div className={styles.badgeStatus}>{tab}</div>
+                  <div className={styles.cardDate}>{fmtShortDateTimeBr(it.created_at)}</div>
+                </div>
+              </article>
             ))
           ) : (
-            <div style={{ color: "#8f9bb3" }}>Nenhum agendamento/consulta encontrado.</div>
+            <div className={styles.muted}>Nenhuma solicitação encontrada.</div>
           )}
         </section>
       </main>
 
-      {qrOpen ? (
-        <div className={styles.qrOverlay} role="dialog" aria-modal="true" aria-label="QR Code" onClick={() => setQrOpen(false)}>
-          <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.qrHeader}>
-              <div className={styles.qrTitle}>Seu QR Code</div>
-              <button className={styles.qrCloseBtn} type="button" onClick={() => setQrOpen(false)} aria-label="Fechar">
+      {filterOpen ? (
+        <div className={styles.sheetOverlay} role="dialog" aria-modal="true" aria-label="Filtrar solicitações">
+          <div className={styles.sheet} ref={sheetRef}>
+            <div className={styles.sheetHandle} aria-hidden="true" />
+            <div className={styles.sheetHeader}>
+              <div className={styles.sheetTitle}>Filtrar solicitações</div>
+              <button className={styles.sheetClose} type="button" onClick={() => setFilterOpen(false)} aria-label="Fechar">
                 <X size={18} aria-hidden="true" />
               </button>
             </div>
+            <div className={styles.sheetDivider} />
 
-            <div className={styles.qrBox}>
-              {qrStatus === "loading" ? (
-                <div style={{ color: "#4b5563" }}>Gerando…</div>
-              ) : qrStatus === "error" ? (
-                <div style={{ color: "#b00020" }}>{qrError || "Falha ao gerar QR"}</div>
-              ) : qrDataUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img className={styles.qrImg} src={qrDataUrl} alt="QR Code" />
-              ) : (
-                <div style={{ color: "#4b5563" }}>QR indisponível</div>
-              )}
+            <div className={styles.sheetSection}>
+              <div className={styles.sectionTitle}>Data</div>
+              <div className={styles.dateRow}>
+                <label className={styles.dateField}>
+                  <div className={styles.dateLabel}>De</div>
+                  <input className={styles.dateInput} type="date" value={draftFrom} onChange={(e) => setDraftFrom(e.target.value)} />
+                </label>
+                <label className={styles.dateField}>
+                  <div className={styles.dateLabel}>Até</div>
+                  <input className={styles.dateInput} type="date" value={draftTo} onChange={(e) => setDraftTo(e.target.value)} />
+                </label>
+              </div>
             </div>
 
-            <div className={styles.qrHint}>Aponte a câmera para compartilhar seus dados com segurança.</div>
+            <div className={styles.sheetDivider} />
+
+            <div className={styles.sheetSection}>
+              <div className={styles.sectionTitle}>Tipo de solicitação</div>
+              <div className={styles.tipoGrid}>
+                {["Denúncia", "Sugestão", "Reclamação", "Elogio", "Solicitação"].map((t) => {
+                  const selected = draftTipos.some((x) => x.toLowerCase() === t.toLowerCase());
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      className={[styles.tipoPill, selected ? styles.tipoPillSelected : ""].filter(Boolean).join(" ")}
+                      onClick={() => toggleDraftTipo(t)}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className={styles.sheetDivider} />
+
+            <div className={styles.sheetActions}>
+              <button type="button" className={styles.clearBtn} onClick={clearFilters}>
+                Limpar filtros
+              </button>
+              <button type="button" className={styles.applyBtn} onClick={applyFilters} disabled={Boolean(draftFrom) !== Boolean(draftTo)}>
+                <span>Aplicar</span>
+                <SlidersHorizontal size={16} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
