@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import styles from "./page.module.css";
 
 type Medico = { id: number; nome: string; crm: string; especialidade: string | null; ativo: boolean };
@@ -36,7 +37,6 @@ export default function AdminConsultasPage() {
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [loadingMedicos, setLoadingMedicos] = useState(true);
   const [medicoId, setMedicoId] = useState<string>("");
-  const selectedMedico = useMemo(() => medicos.find((m) => String(m.id) === medicoId) || null, [medicos, medicoId]);
 
   const [scope, setScope] = useState<"future" | "history" | "all">("future");
   const [date, setDate] = useState<string>("");
@@ -44,16 +44,8 @@ export default function AdminConsultasPage() {
 
   const [list, setList] = useState<ConsultaRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-
-  const [selected, setSelected] = useState<ConsultaRow | null>(null);
-  const [activeTab, setActiveTab] = useState<"visao" | "exames" | "receitas" | "atestados" | "encaminhamento" | "historico">("visao");
-  const [docProfissional, setDocProfissional] = useState("");
-  const [docCrm, setDocCrm] = useState("");
-  const [docEspecialidade, setDocEspecialidade] = useState("");
-  const [docImageUrl, setDocImageUrl] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -80,13 +72,6 @@ export default function AdminConsultasPage() {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (!selectedMedico) return;
-    setDocProfissional(selectedMedico.nome || "");
-    setDocCrm(selectedMedico.crm || "");
-    setDocEspecialidade(selectedMedico.especialidade || "");
-  }, [selectedMedico]);
 
   async function load() {
     if (!medicoId) return;
@@ -116,36 +101,6 @@ export default function AdminConsultasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [medicoId, scope, date, status]);
 
-  async function salvarDocumento(kind: "receita" | "atestado") {
-    if (!selected?.cpf) return;
-    setSaving(true);
-    setError(null);
-    setInfo(null);
-    try {
-      const endpoint = kind === "receita" ? "/api/receitas" : "/api/atestados";
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          cpf: String(selected.cpf),
-          profissional: docProfissional || null,
-          crm: docCrm || null,
-          especialidade: docEspecialidade || null,
-          imageUrl: docImageUrl || null,
-          status: "Ativo",
-        }),
-      });
-      const json = (await res.json()) as { ok?: boolean; id?: number; error?: string };
-      if (!res.ok) throw new Error(json.error || "Falha ao salvar documento");
-      setInfo(`${kind === "receita" ? "Receita" : "Atestado"} criado com sucesso (id: ${json.id ?? "-"})`);
-      setDocImageUrl("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro ao salvar documento");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -153,7 +108,7 @@ export default function AdminConsultasPage() {
           <div className={styles.title}>Consultas (web)</div>
           <div className={styles.subtitle}>Selecione um médico e veja os atendimentos para gerar receita/atestado</div>
         </div>
-        <button className={styles.secondaryBtn} type="button" onClick={() => void load()} disabled={loading || saving}>
+        <button className={styles.secondaryBtn} type="button" onClick={() => void load()} disabled={loading}>
           Atualizar
         </button>
       </div>
@@ -161,7 +116,7 @@ export default function AdminConsultasPage() {
       {error ? <div className={styles.error}>{error}</div> : null}
       {info ? <div className={styles.info}>{info}</div> : null}
 
-      <section className={styles.card} aria-busy={loading || saving}>
+      <section className={styles.card} aria-busy={loading}>
         <div className={styles.filters}>
           <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
             <div className="ds-label">Médico</div>
@@ -208,17 +163,10 @@ export default function AdminConsultasPage() {
         ) : list.length ? (
           <div className={styles.list}>
             {list.map((c) => (
-              <button
+              <Link
                 key={c.id}
-                type="button"
                 className={styles.item}
-                onClick={() => {
-                  setSelected(c);
-                  setActiveTab("visao");
-                  setDocImageUrl("");
-                  setInfo(null);
-                  setError(null);
-                }}
+                href={`/admin/consultas/${c.id}`}
               >
                 <div className={styles.itemTop}>
                   <div className={styles.name}>{c.nome_completo || "Paciente"}</div>
@@ -239,246 +187,13 @@ export default function AdminConsultasPage() {
                     <strong>Local:</strong> {c.local_consulta || "-"}
                   </div>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         ) : (
           <div className={styles.muted}>Nenhuma consulta encontrada.</div>
         )}
       </section>
-
-      {selected ? (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Consulta">
-          <div className={styles.detailShell}>
-            <div className={styles.detailTop}>
-              <button className={styles.backBtn} type="button" onClick={() => setSelected(null)}>
-                ← Voltar
-              </button>
-              <button className={styles.closeX} type="button" onClick={() => setSelected(null)} aria-label="Fechar">
-                ✕
-              </button>
-            </div>
-
-            <div className={styles.detailHeader}>
-              <div className={styles.detailHeaderLeft}>
-                <div className={styles.detailTitle}>{selected.nome_completo || "Paciente"}</div>
-                <div className={styles.detailMeta}>
-                  {selected.cpf ? `CPF: ${fmtCpf(selected.cpf)}` : "CPF: -"} •{" "}
-                  {selected.data_consulta_date ? fmtDateBr(selected.data_consulta_date) : "-"} •{" "}
-                  {selected.horario_consulta_time?.slice(0, 5) || "-"} • {selected.especialidade_agendar || "-"}
-                </div>
-              </div>
-              <div className={styles.detailHeaderActions}>
-                <button
-                  className={styles.actionBtn}
-                  type="button"
-                  onClick={() => {
-                    setInfo("Solicitação de exame: em breve.");
-                    setError(null);
-                  }}
-                  disabled={saving}
-                >
-                  Solicitar exame
-                </button>
-                <button
-                  className={styles.actionBtn}
-                  type="button"
-                  onClick={() => setActiveTab("atestados")}
-                  disabled={saving}
-                >
-                  Atestado
-                </button>
-                <button
-                  className={styles.actionBtnPrimary}
-                  type="button"
-                  onClick={() => setActiveTab("receitas")}
-                  disabled={saving}
-                >
-                  Receita
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.tabBar}>
-              <button
-                type="button"
-                className={`${styles.tabBtn} ${activeTab === "visao" ? styles.tabActive : ""}`}
-                onClick={() => setActiveTab("visao")}
-              >
-                Visão Geral
-              </button>
-              <button
-                type="button"
-                className={`${styles.tabBtn} ${activeTab === "exames" ? styles.tabActive : ""}`}
-                onClick={() => setActiveTab("exames")}
-              >
-                Exames
-              </button>
-              <button
-                type="button"
-                className={`${styles.tabBtn} ${activeTab === "receitas" ? styles.tabActive : ""}`}
-                onClick={() => setActiveTab("receitas")}
-              >
-                Receitas
-              </button>
-              <button
-                type="button"
-                className={`${styles.tabBtn} ${activeTab === "atestados" ? styles.tabActive : ""}`}
-                onClick={() => setActiveTab("atestados")}
-              >
-                Atestados
-              </button>
-              <button
-                type="button"
-                className={`${styles.tabBtn} ${activeTab === "encaminhamento" ? styles.tabActive : ""}`}
-                onClick={() => setActiveTab("encaminhamento")}
-              >
-                Encaminhamento
-              </button>
-              <button
-                type="button"
-                className={`${styles.tabBtn} ${activeTab === "historico" ? styles.tabActive : ""}`}
-                onClick={() => setActiveTab("historico")}
-              >
-                Histórico
-              </button>
-            </div>
-
-            <div className={styles.detailBody}>
-              {activeTab === "visao" ? (
-                <div className={styles.cardsRow}>
-                  <section className={styles.bigCard}>
-                    <div className={styles.cardH}>Paciente</div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Nome:</span> {selected.nome_completo || "-"}
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>CPF:</span> {typeof selected.cpf === "number" ? fmtCpf(selected.cpf) : "-"}
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Consulta:</span> {selected.especialidade_agendar || "-"} • {selected.local_consulta || "-"}
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Data/Hora:</span>{" "}
-                      {selected.data_consulta_date ? fmtDateBr(selected.data_consulta_date) : "-"} •{" "}
-                      {selected.horario_consulta_time?.slice(0, 5) || "-"}
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Médico:</span> {selected.medico_nome || "-"}
-                    </div>
-                  </section>
-
-                  <section className={styles.bigCard}>
-                    <div className={styles.cardHeaderRow}>
-                      <div className={styles.cardH}>Informações rápidas</div>
-                      <div className={styles.statusBadge}>{selected.status || "-"}</div>
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Tipo:</span> {selected.tipo || "Consulta"}
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Local:</span> {selected.local_consulta || "-"}
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Médico (ID):</span> {selected.medico_id ?? "-"}
-                    </div>
-                    <div className={styles.cardLine}>
-                      <span className={styles.k}>Criado em:</span> {selected.created_at ? new Date(selected.created_at).toLocaleString("pt-BR") : "-"}
-                    </div>
-                  </section>
-                </div>
-              ) : null}
-
-              {activeTab === "receitas" || activeTab === "atestados" ? (
-                <section className={styles.fullCard}>
-                  <div className={styles.cardH}>{activeTab === "receitas" ? "Receita" : "Atestado"}</div>
-                  <div className={styles.formGrid}>
-                    <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
-                      <div className={styles.inputLabel}>Consulta</div>
-                      <div className={styles.inputBox}>
-                        <div className={styles.readonlyText}>
-                          {selected.especialidade_agendar || "-"} • {selected.local_consulta || "-"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className={styles.formField}>
-                      <div className={styles.inputLabel}>Profissional</div>
-                      <div className={styles.inputBox}>
-                        <input
-                          className={styles.inputNative}
-                          value={docProfissional}
-                          onChange={(e) => setDocProfissional(e.target.value)}
-                          placeholder="Nome do profissional"
-                        />
-                      </div>
-                    </div>
-                    <div className={styles.formField}>
-                      <div className={styles.inputLabel}>CRM</div>
-                      <div className={styles.inputBox}>
-                        <input className={styles.inputNative} value={docCrm} onChange={(e) => setDocCrm(e.target.value)} placeholder="CRM" />
-                      </div>
-                    </div>
-
-                    <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
-                      <div className={styles.inputLabel}>Especialidade</div>
-                      <div className={styles.inputBox}>
-                        <input
-                          className={styles.inputNative}
-                          value={docEspecialidade}
-                          onChange={(e) => setDocEspecialidade(e.target.value)}
-                          placeholder="Especialidade"
-                        />
-                      </div>
-                    </div>
-
-                    <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
-                      <div className={styles.inputLabel}>Imagem (URL)</div>
-                      <div className={styles.inputBox}>
-                        <input
-                          className={styles.inputNative}
-                          value={docImageUrl}
-                          onChange={(e) => setDocImageUrl(e.target.value)}
-                          placeholder="Cole a URL da imagem do documento"
-                        />
-                      </div>
-                      <div className={styles.hint}>Opcional, mas recomendado para anexar o documento.</div>
-                    </div>
-                  </div>
-
-                  <div className={styles.docActions}>
-                    <button className={styles.footerCancel} type="button" onClick={() => setSelected(null)} disabled={saving}>
-                      Cancelar
-                    </button>
-                    <div className={styles.footerActions}>
-                      {activeTab === "atestados" ? (
-                        <button className={styles.footerWarn} type="button" onClick={() => void salvarDocumento("atestado")} disabled={saving || !selected.cpf}>
-                          Gerar atestado
-                        </button>
-                      ) : (
-                        <button className={styles.footerPrimary} type="button" onClick={() => void salvarDocumento("receita")} disabled={saving || !selected.cpf}>
-                          Gerar receita
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </section>
-              ) : null}
-
-              {activeTab === "exames" || activeTab === "encaminhamento" || activeTab === "historico" ? (
-                <section className={styles.fullCard}>
-                  <div className={styles.cardH}>
-                    {activeTab === "exames" ? "Solicitação de exames" : activeTab === "encaminhamento" ? "Encaminhamento" : "Histórico"}
-                  </div>
-                  <div className={styles.muted} style={{ marginTop: 8 }}>
-                    Esta aba está preparada para o fluxo que definimos, mas a implementação completa será conectada nas próximas etapas.
-                  </div>
-                </section>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
