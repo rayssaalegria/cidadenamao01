@@ -21,6 +21,15 @@ function toNumericOrNull(value: string) {
   return Number.isFinite(n) ? n : null;
 }
 
+function missingConteudoColumn(msg: string) {
+  return (
+    /column .*conteudo.* does not exist/i.test(msg) ||
+    /conteudo.*does not exist/i.test(msg) ||
+    /could not find the ['"]conteudo['"] column/i.test(msg) ||
+    /schema cache/i.test(msg)
+  );
+}
+
 export async function GET(req: Request) {
   const cpf = new URL(req.url).searchParams.get("cpf")?.trim() || "";
   if (!cpf) return NextResponse.json({ error: "cpf é obrigatório" }, { status: 400 });
@@ -52,7 +61,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ data: [] satisfies ReceitaRow[] }, { status: 200 });
     }
     // coluna `conteudo` pode não existir ainda
-    if (/column .*conteudo.* does not exist/i.test(msg) || /conteudo.*does not exist/i.test(msg)) {
+    if (missingConteudoColumn(msg)) {
       res = await supabaseAdmin
         .from("receitas")
         .select("id,created_at,cpf,profissional,crm,especialidade,image_url,status")
@@ -139,7 +148,7 @@ export async function POST(req: Request) {
 
   if (res.error) {
     const msg = String(res.error.message || "");
-    if (/column .*conteudo.* does not exist/i.test(msg) || /conteudo.*does not exist/i.test(msg)) {
+    if (missingConteudoColumn(msg)) {
       res = await supabaseAdmin
         .from("receitas")
         .insert({
