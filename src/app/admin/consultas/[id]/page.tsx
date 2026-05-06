@@ -22,6 +22,14 @@ type ConsultaRow = {
   channel_id?: number | null;
 };
 
+type MedicoRow = {
+  id: number;
+  nome: string;
+  crm: string;
+  especialidade: string | null;
+  ativo: boolean;
+};
+
 function fmtCpf(n: number) {
   const d = String(n).replace(/\D/g, "");
   if (d.length !== 11) return String(n);
@@ -107,6 +115,30 @@ export default function AdminConsultaDetalhePage() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!consulta?.medico_id) return;
+      try {
+        const res = await fetch("/api/medicos", { cache: "no-store" });
+        const json = (await res.json()) as { data?: MedicoRow[]; error?: string };
+        if (!res.ok) throw new Error(json.error || "Falha ao carregar médicos");
+        if (cancelled) return;
+        const medico = (json.data || []).find((m) => m.id === consulta.medico_id) || null;
+        if (!medico) return;
+        setDocProfissional(medico.nome || "");
+        setDocCrm(medico.crm || "");
+        setDocEspecialidade(medico.especialidade || "");
+      } catch {
+        // silencioso: mantém valores já existentes
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [consulta?.medico_id]);
 
   const canGenerate = useMemo(() => {
     const digits = String(cpfPaciente || "").replace(/\D/g, "");
@@ -354,15 +386,15 @@ export default function AdminConsultaDetalhePage() {
 
                   <div className={styles.field}>
                     <div className={styles.label}>Profissional</div>
-                    <input className={styles.input} value={docProfissional} onChange={(e) => setDocProfissional(e.target.value)} />
+                    <input className={styles.input} value={docProfissional} readOnly disabled />
                   </div>
                   <div className={styles.field}>
                     <div className={styles.label}>CRM</div>
-                    <input className={styles.input} value={docCrm} onChange={(e) => setDocCrm(e.target.value)} />
+                    <input className={styles.input} value={docCrm} readOnly disabled />
                   </div>
                   <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
                     <div className={styles.label}>Especialidade</div>
-                    <input className={styles.input} value={docEspecialidade} onChange={(e) => setDocEspecialidade(e.target.value)} />
+                    <input className={styles.input} value={docEspecialidade} readOnly disabled />
                   </div>
                   <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
                     <div className={styles.label}>{activeTab === "receitas" || activeTab === "atestados" ? "Anexo (upload) ou URL" : "Imagem (URL)"}</div>

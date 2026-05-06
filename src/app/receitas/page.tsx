@@ -157,6 +157,11 @@ function downloadUrl(url: string, filename: string) {
   a.remove();
 }
 
+function isPdfUrl(url: string) {
+  const u = String(url || "").trim().toLowerCase();
+  return u.startsWith("data:application/pdf") || u.includes("application/pdf") || u.endsWith(".pdf");
+}
+
 export default function ReceitasPage() {
   const [token, setToken] = useState<string | null>(null);
   const [me, setMe] = useState<SasiMeResponse | null>(null);
@@ -549,7 +554,11 @@ export default function ReceitasPage() {
             </div>
 
             <div className={styles.dialogContent}>
-              <img className={styles.rxImage} src={rxImageUrl} alt="Imagem da receita" />
+              {isPdfUrl(rxImageUrl) ? (
+                <iframe className={styles.pdfFrame} src={rxImageUrl} title="Receita (PDF)" />
+              ) : (
+                <img className={styles.rxImage} src={rxImageUrl} alt="Imagem da receita" />
+              )}
             </div>
 
             <div className={styles.dialogFooter}>
@@ -560,7 +569,7 @@ export default function ReceitasPage() {
                 className={styles.primaryBtn}
                 type="button"
                 onClick={() => {
-                  downloadUrl(rxImageUrl, `receita-${rxSelected?.id ?? "arquivo"}.png`);
+                  downloadUrl(rxImageUrl, `receita-${rxSelected?.id ?? "arquivo"}.${isPdfUrl(rxImageUrl) ? "pdf" : "png"}`);
                 }}
               >
                 Baixar
@@ -581,7 +590,11 @@ export default function ReceitasPage() {
             </div>
 
             <div className={styles.dialogContent}>
-              <img className={styles.rxImage} src={atImageUrl} alt="Imagem do atestado" />
+              {isPdfUrl(atImageUrl) ? (
+                <iframe className={styles.pdfFrame} src={atImageUrl} title="Atestado (PDF)" />
+              ) : (
+                <img className={styles.rxImage} src={atImageUrl} alt="Imagem do atestado" />
+              )}
             </div>
 
             <div className={styles.dialogFooter}>
@@ -592,7 +605,7 @@ export default function ReceitasPage() {
                 className={styles.primaryBtn}
                 type="button"
                 onClick={() => {
-                  downloadUrl(atImageUrl, `atestado-${atSelected?.id ?? "arquivo"}.png`);
+                  downloadUrl(atImageUrl, `atestado-${atSelected?.id ?? "arquivo"}.${isPdfUrl(atImageUrl) ? "pdf" : "png"}`);
                 }}
               >
                 Baixar
