@@ -24,6 +24,9 @@ export default function AdminLayout({
           <a className={styles.navItem} href="/admin/horarios">
             Horários
           </a>
+          <a className={styles.navItem} href="/admin/consultas">
+            Consultas
+          </a>
           <a className={styles.navItem} href="/admin/calendario">
             Calendário
           </a>
