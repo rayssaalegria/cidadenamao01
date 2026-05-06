@@ -247,55 +247,99 @@ export default function AdminConsultasPage() {
 
       {selected ? (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Consulta">
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <div>
-                <div className={styles.modalTitle}>{selected.nome_completo || "Paciente"}</div>
-                <div className={styles.muted}>
+          <div className={styles.dialog}>
+            <div className={styles.dialogHeader}>
+              <div className={styles.dialogHeaderText}>
+                <div className={styles.dialogTitle}>{selected.nome_completo || "Paciente"}</div>
+                <div className={styles.dialogSubtitle}>
                   {selected.cpf ? `CPF: ${fmtCpf(selected.cpf)}` : "CPF: -"} •{" "}
                   {selected.data_consulta_date ? fmtDateBr(selected.data_consulta_date) : "-"} •{" "}
-                  {selected.horario_consulta_time?.slice(0, 5) || "-"}
+                  {selected.horario_consulta_time?.slice(0, 5) || "-"} • {selected.status || "-"}
                 </div>
               </div>
-              <button className={styles.iconBtn} type="button" onClick={() => setSelected(null)} aria-label="Fechar">
+              <button className={styles.dialogClose} type="button" onClick={() => setSelected(null)} aria-label="Fechar">
                 ✕
               </button>
             </div>
 
-            <div className={styles.modalBody}>
-              <div className={styles.grid2}>
-                <div className={styles.field}>
-                  <div className="ds-label">Profissional</div>
-                  <input className="ds-control ds-md" value={docProfissional} onChange={(e) => setDocProfissional(e.target.value)} />
+            <div className={styles.dialogContent}>
+              <div className={styles.formGrid}>
+                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                  <div className={styles.inputLabel}>Consulta</div>
+                  <div className={styles.inputBox}>
+                    <div className={styles.readonlyText}>
+                      {selected.especialidade_agendar || "-"} • {selected.local_consulta || "-"}
+                    </div>
+                  </div>
                 </div>
-                <div className={styles.field}>
-                  <div className="ds-label">CRM</div>
-                  <input className="ds-control ds-md" value={docCrm} onChange={(e) => setDocCrm(e.target.value)} />
+
+                <div className={styles.formField}>
+                  <div className={styles.inputLabel}>Profissional</div>
+                  <div className={styles.inputBox}>
+                    <input
+                      className={styles.inputNative}
+                      value={docProfissional}
+                      onChange={(e) => setDocProfissional(e.target.value)}
+                      placeholder="Nome do profissional"
+                    />
+                  </div>
                 </div>
-                <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-                  <div className="ds-label">Especialidade</div>
-                  <input className="ds-control ds-md" value={docEspecialidade} onChange={(e) => setDocEspecialidade(e.target.value)} />
+                <div className={styles.formField}>
+                  <div className={styles.inputLabel}>CRM</div>
+                  <div className={styles.inputBox}>
+                    <input className={styles.inputNative} value={docCrm} onChange={(e) => setDocCrm(e.target.value)} placeholder="CRM" />
+                  </div>
                 </div>
-                <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-                  <div className="ds-label">Imagem (URL)</div>
-                  <input
-                    className="ds-control ds-md"
-                    value={docImageUrl}
-                    onChange={(e) => setDocImageUrl(e.target.value)}
-                    placeholder="Cole a URL da imagem do documento"
-                  />
-                  <div className="ds-hint">Opcional, mas recomendado para anexar o documento.</div>
+
+                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                  <div className={styles.inputLabel}>Especialidade</div>
+                  <div className={styles.inputBox}>
+                    <input
+                      className={styles.inputNative}
+                      value={docEspecialidade}
+                      onChange={(e) => setDocEspecialidade(e.target.value)}
+                      placeholder="Especialidade"
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                  <div className={styles.inputLabel}>Imagem (URL)</div>
+                  <div className={styles.inputBox}>
+                    <input
+                      className={styles.inputNative}
+                      value={docImageUrl}
+                      onChange={(e) => setDocImageUrl(e.target.value)}
+                      placeholder="Cole a URL da imagem do documento"
+                    />
+                  </div>
+                  <div className={styles.hint}>Opcional, mas recomendado para anexar o documento.</div>
                 </div>
               </div>
             </div>
 
-            <div className={styles.modalActions}>
-              <button className={styles.secondaryBtn} type="button" onClick={() => void salvarDocumento("atestado")} disabled={saving || !selected.cpf}>
-                Gerar atestado
+            <div className={styles.dialogFooter}>
+              <button className={styles.footerCancel} type="button" onClick={() => setSelected(null)} disabled={saving}>
+                Cancelar
               </button>
-              <button className={styles.primaryBtn} type="button" onClick={() => void salvarDocumento("receita")} disabled={saving || !selected.cpf}>
-                Gerar receita
-              </button>
+              <div className={styles.footerActions}>
+                <button
+                  className={styles.footerWarn}
+                  type="button"
+                  onClick={() => void salvarDocumento("atestado")}
+                  disabled={saving || !selected.cpf}
+                >
+                  Gerar atestado
+                </button>
+                <button
+                  className={styles.footerPrimary}
+                  type="button"
+                  onClick={() => void salvarDocumento("receita")}
+                  disabled={saving || !selected.cpf}
+                >
+                  Gerar receita
+                </button>
+              </div>
             </div>
           </div>
         </div>
