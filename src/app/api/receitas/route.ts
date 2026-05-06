@@ -148,7 +148,7 @@ export async function POST(req: Request) {
       image_url: imageUrl || null,
       status: status || null,
     })
-    .select("id")
+    .select("id,cpf")
     .single();
 
   if (res.error) {
@@ -164,7 +164,7 @@ export async function POST(req: Request) {
           image_url: imageUrl || null,
           status: status || null,
         })
-        .select("id")
+        .select("id,cpf")
         .single();
     }
   }
@@ -174,6 +174,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg || "Erro ao criar receita" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, id: res.data?.id }, { status: 200 });
+  return NextResponse.json({ ok: true, id: res.data?.id, cpf: res.data?.cpf ?? null }, { status: 200 });
 }
 
