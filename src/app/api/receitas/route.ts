@@ -56,7 +56,7 @@ export async function GET(req: Request) {
   let res: any = await supabaseAdmin
     .from("receitas")
     .select("id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status")
-    .or(`cpf.eq.${cpfDigits},cpf.eq.${cpfNum}`)
+    .in("cpf", [cpf, cpfDigits, cpfNum])
     .order("created_at", { ascending: false });
 
   if (res.error) {
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
       res = await supabaseAdmin
         .from("receitas")
         .select("id,created_at,cpf,profissional,crm,especialidade,image_url,status")
-        .or(`cpf.eq.${cpfDigits},cpf.eq.${cpfNum}`)
+        .in("cpf", [cpf, cpfDigits, cpfNum])
         .order("created_at", { ascending: false });
     }
   }
