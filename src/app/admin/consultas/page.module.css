@@ -163,56 +163,195 @@
   z-index: 50;
 }
 
-.dialog {
-  width: min(720px, 100%);
-  background: #f4f5ff;
+.detailShell {
+  width: min(1212px, 100%);
+  max-height: 86vh;
+  overflow: auto;
+  background: #fff;
   border-radius: 8px;
-  border: 1px solid rgba(195, 201, 232, 0.6);
-  overflow: hidden;
+  border: 1px solid rgba(219, 223, 241, 1);
 }
 
-.dialogHeader {
+.detailTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(219, 223, 241, 1);
+  background: #fff;
+}
+
+.backBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: #45556c;
+}
+
+.closeX {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(219, 223, 241, 1);
+  background: #fff;
+  cursor: pointer;
+  color: #45556c;
+  font-weight: 700;
+}
+
+.detailHeader {
+  background: #f4f5ff;
+  padding: 16px 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid rgba(219, 223, 241, 1);
+}
+
+.detailHeaderLeft {
+  min-width: 0;
+}
+
+.detailTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172b;
+  line-height: 32px;
+}
+
+.detailMeta {
+  margin-top: 2px;
+  font-size: 14px;
+  color: #45556c;
+}
+
+.detailHeaderActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.actionBtn {
+  height: 35px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid #6c7993;
+  background: transparent;
+  color: #6c7993;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.actionBtnPrimary {
+  height: 35px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: none;
+  background: #0049cc;
+  color: #fcfcfd;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.actionBtn:disabled,
+.actionBtnPrimary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.tabBar {
+  background: #f4f5ff;
+  border-bottom: 1px solid rgba(195, 201, 232, 0.6);
+  padding: 0 16px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  overflow: auto;
+}
+
+.tabBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 12px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #394aa5;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.tabActive {
+  color: #232d64;
+  border-bottom-color: #232d64;
+}
+
+.detailBody {
+  background: #f4f5ff;
+  padding: 24px;
+}
+
+.cardsRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.bigCard,
+.fullCard {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.cardH {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172b;
+  margin-bottom: 12px;
+}
+
+.cardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.statusBadge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(195, 201, 232, 0.6);
+  background: rgba(195, 201, 232, 0.2);
+  color: #232d64;
+  white-space: nowrap;
+}
+
+.cardLine {
+  font-size: 14px;
+  color: #45556c;
+  margin-top: 8px;
+}
+
+.k {
+  color: #6c7993;
+}
+
+.docActions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(195, 201, 232, 0.35);
-}
-
-.dialogHeaderText {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dialogTitle {
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  color: #232d64;
-}
-
-.dialogSubtitle {
-  font-size: 12px;
-  color: rgba(87, 97, 117, 0.9);
-}
-
-.dialogClose {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid rgba(195, 201, 232, 0.35);
-  background: transparent;
-  cursor: pointer;
-  font-weight: 900;
-  color: #232d64;
-}
-
-.dialogContent {
-  padding: 8px 24px 24px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .formGrid {
@@ -344,6 +483,9 @@
     gap: 8px 12px;
   }
   .formGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cardsRow {
     grid-template-columns: 1fr 1fr;
   }
 }

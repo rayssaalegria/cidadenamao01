@@ -49,6 +49,7 @@ export default function AdminConsultasPage() {
   const [info, setInfo] = useState<string | null>(null);
 
   const [selected, setSelected] = useState<ConsultaRow | null>(null);
+  const [activeTab, setActiveTab] = useState<"visao" | "exames" | "receitas" | "atestados" | "encaminhamento" | "historico">("visao");
   const [docProfissional, setDocProfissional] = useState("");
   const [docCrm, setDocCrm] = useState("");
   const [docEspecialidade, setDocEspecialidade] = useState("");
@@ -213,6 +214,7 @@ export default function AdminConsultasPage() {
                 className={styles.item}
                 onClick={() => {
                   setSelected(c);
+                  setActiveTab("visao");
                   setDocImageUrl("");
                   setInfo(null);
                   setError(null);
@@ -247,99 +249,232 @@ export default function AdminConsultasPage() {
 
       {selected ? (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Consulta">
-          <div className={styles.dialog}>
-            <div className={styles.dialogHeader}>
-              <div className={styles.dialogHeaderText}>
-                <div className={styles.dialogTitle}>{selected.nome_completo || "Paciente"}</div>
-                <div className={styles.dialogSubtitle}>
-                  {selected.cpf ? `CPF: ${fmtCpf(selected.cpf)}` : "CPF: -"} •{" "}
-                  {selected.data_consulta_date ? fmtDateBr(selected.data_consulta_date) : "-"} •{" "}
-                  {selected.horario_consulta_time?.slice(0, 5) || "-"} • {selected.status || "-"}
-                </div>
-              </div>
-              <button className={styles.dialogClose} type="button" onClick={() => setSelected(null)} aria-label="Fechar">
+          <div className={styles.detailShell}>
+            <div className={styles.detailTop}>
+              <button className={styles.backBtn} type="button" onClick={() => setSelected(null)}>
+                ← Voltar
+              </button>
+              <button className={styles.closeX} type="button" onClick={() => setSelected(null)} aria-label="Fechar">
                 ✕
               </button>
             </div>
 
-            <div className={styles.dialogContent}>
-              <div className={styles.formGrid}>
-                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
-                  <div className={styles.inputLabel}>Consulta</div>
-                  <div className={styles.inputBox}>
-                    <div className={styles.readonlyText}>
-                      {selected.especialidade_agendar || "-"} • {selected.local_consulta || "-"}
-                    </div>
-                  </div>
+            <div className={styles.detailHeader}>
+              <div className={styles.detailHeaderLeft}>
+                <div className={styles.detailTitle}>{selected.nome_completo || "Paciente"}</div>
+                <div className={styles.detailMeta}>
+                  {selected.cpf ? `CPF: ${fmtCpf(selected.cpf)}` : "CPF: -"} •{" "}
+                  {selected.data_consulta_date ? fmtDateBr(selected.data_consulta_date) : "-"} •{" "}
+                  {selected.horario_consulta_time?.slice(0, 5) || "-"} • {selected.especialidade_agendar || "-"}
                 </div>
-
-                <div className={styles.formField}>
-                  <div className={styles.inputLabel}>Profissional</div>
-                  <div className={styles.inputBox}>
-                    <input
-                      className={styles.inputNative}
-                      value={docProfissional}
-                      onChange={(e) => setDocProfissional(e.target.value)}
-                      placeholder="Nome do profissional"
-                    />
-                  </div>
-                </div>
-                <div className={styles.formField}>
-                  <div className={styles.inputLabel}>CRM</div>
-                  <div className={styles.inputBox}>
-                    <input className={styles.inputNative} value={docCrm} onChange={(e) => setDocCrm(e.target.value)} placeholder="CRM" />
-                  </div>
-                </div>
-
-                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
-                  <div className={styles.inputLabel}>Especialidade</div>
-                  <div className={styles.inputBox}>
-                    <input
-                      className={styles.inputNative}
-                      value={docEspecialidade}
-                      onChange={(e) => setDocEspecialidade(e.target.value)}
-                      placeholder="Especialidade"
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
-                  <div className={styles.inputLabel}>Imagem (URL)</div>
-                  <div className={styles.inputBox}>
-                    <input
-                      className={styles.inputNative}
-                      value={docImageUrl}
-                      onChange={(e) => setDocImageUrl(e.target.value)}
-                      placeholder="Cole a URL da imagem do documento"
-                    />
-                  </div>
-                  <div className={styles.hint}>Opcional, mas recomendado para anexar o documento.</div>
-                </div>
+              </div>
+              <div className={styles.detailHeaderActions}>
+                <button
+                  className={styles.actionBtn}
+                  type="button"
+                  onClick={() => {
+                    setInfo("Solicitação de exame: em breve.");
+                    setError(null);
+                  }}
+                  disabled={saving}
+                >
+                  Solicitar exame
+                </button>
+                <button
+                  className={styles.actionBtn}
+                  type="button"
+                  onClick={() => setActiveTab("atestados")}
+                  disabled={saving}
+                >
+                  Atestado
+                </button>
+                <button
+                  className={styles.actionBtnPrimary}
+                  type="button"
+                  onClick={() => setActiveTab("receitas")}
+                  disabled={saving}
+                >
+                  Receita
+                </button>
               </div>
             </div>
 
-            <div className={styles.dialogFooter}>
-              <button className={styles.footerCancel} type="button" onClick={() => setSelected(null)} disabled={saving}>
-                Cancelar
+            <div className={styles.tabBar}>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === "visao" ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab("visao")}
+              >
+                Visão Geral
               </button>
-              <div className={styles.footerActions}>
-                <button
-                  className={styles.footerWarn}
-                  type="button"
-                  onClick={() => void salvarDocumento("atestado")}
-                  disabled={saving || !selected.cpf}
-                >
-                  Gerar atestado
-                </button>
-                <button
-                  className={styles.footerPrimary}
-                  type="button"
-                  onClick={() => void salvarDocumento("receita")}
-                  disabled={saving || !selected.cpf}
-                >
-                  Gerar receita
-                </button>
-              </div>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === "exames" ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab("exames")}
+              >
+                Exames
+              </button>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === "receitas" ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab("receitas")}
+              >
+                Receitas
+              </button>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === "atestados" ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab("atestados")}
+              >
+                Atestados
+              </button>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === "encaminhamento" ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab("encaminhamento")}
+              >
+                Encaminhamento
+              </button>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === "historico" ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab("historico")}
+              >
+                Histórico
+              </button>
+            </div>
+
+            <div className={styles.detailBody}>
+              {activeTab === "visao" ? (
+                <div className={styles.cardsRow}>
+                  <section className={styles.bigCard}>
+                    <div className={styles.cardH}>Paciente</div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Nome:</span> {selected.nome_completo || "-"}
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>CPF:</span> {typeof selected.cpf === "number" ? fmtCpf(selected.cpf) : "-"}
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Consulta:</span> {selected.especialidade_agendar || "-"} • {selected.local_consulta || "-"}
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Data/Hora:</span>{" "}
+                      {selected.data_consulta_date ? fmtDateBr(selected.data_consulta_date) : "-"} •{" "}
+                      {selected.horario_consulta_time?.slice(0, 5) || "-"}
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Médico:</span> {selected.medico_nome || "-"}
+                    </div>
+                  </section>
+
+                  <section className={styles.bigCard}>
+                    <div className={styles.cardHeaderRow}>
+                      <div className={styles.cardH}>Informações rápidas</div>
+                      <div className={styles.statusBadge}>{selected.status || "-"}</div>
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Tipo:</span> {selected.tipo || "Consulta"}
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Local:</span> {selected.local_consulta || "-"}
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Médico (ID):</span> {selected.medico_id ?? "-"}
+                    </div>
+                    <div className={styles.cardLine}>
+                      <span className={styles.k}>Criado em:</span> {selected.created_at ? new Date(selected.created_at).toLocaleString("pt-BR") : "-"}
+                    </div>
+                  </section>
+                </div>
+              ) : null}
+
+              {activeTab === "receitas" || activeTab === "atestados" ? (
+                <section className={styles.fullCard}>
+                  <div className={styles.cardH}>{activeTab === "receitas" ? "Receita" : "Atestado"}</div>
+                  <div className={styles.formGrid}>
+                    <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                      <div className={styles.inputLabel}>Consulta</div>
+                      <div className={styles.inputBox}>
+                        <div className={styles.readonlyText}>
+                          {selected.especialidade_agendar || "-"} • {selected.local_consulta || "-"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.formField}>
+                      <div className={styles.inputLabel}>Profissional</div>
+                      <div className={styles.inputBox}>
+                        <input
+                          className={styles.inputNative}
+                          value={docProfissional}
+                          onChange={(e) => setDocProfissional(e.target.value)}
+                          placeholder="Nome do profissional"
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.formField}>
+                      <div className={styles.inputLabel}>CRM</div>
+                      <div className={styles.inputBox}>
+                        <input className={styles.inputNative} value={docCrm} onChange={(e) => setDocCrm(e.target.value)} placeholder="CRM" />
+                      </div>
+                    </div>
+
+                    <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                      <div className={styles.inputLabel}>Especialidade</div>
+                      <div className={styles.inputBox}>
+                        <input
+                          className={styles.inputNative}
+                          value={docEspecialidade}
+                          onChange={(e) => setDocEspecialidade(e.target.value)}
+                          placeholder="Especialidade"
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                      <div className={styles.inputLabel}>Imagem (URL)</div>
+                      <div className={styles.inputBox}>
+                        <input
+                          className={styles.inputNative}
+                          value={docImageUrl}
+                          onChange={(e) => setDocImageUrl(e.target.value)}
+                          placeholder="Cole a URL da imagem do documento"
+                        />
+                      </div>
+                      <div className={styles.hint}>Opcional, mas recomendado para anexar o documento.</div>
+                    </div>
+                  </div>
+
+                  <div className={styles.docActions}>
+                    <button className={styles.footerCancel} type="button" onClick={() => setSelected(null)} disabled={saving}>
+                      Cancelar
+                    </button>
+                    <div className={styles.footerActions}>
+                      {activeTab === "atestados" ? (
+                        <button className={styles.footerWarn} type="button" onClick={() => void salvarDocumento("atestado")} disabled={saving || !selected.cpf}>
+                          Gerar atestado
+                        </button>
+                      ) : (
+                        <button className={styles.footerPrimary} type="button" onClick={() => void salvarDocumento("receita")} disabled={saving || !selected.cpf}>
+                          Gerar receita
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              {activeTab === "exames" || activeTab === "encaminhamento" || activeTab === "historico" ? (
+                <section className={styles.fullCard}>
+                  <div className={styles.cardH}>
+                    {activeTab === "exames" ? "Solicitação de exames" : activeTab === "encaminhamento" ? "Encaminhamento" : "Histórico"}
+                  </div>
+                  <div className={styles.muted} style={{ marginTop: 8 }}>
+                    Esta aba está preparada para o fluxo que definimos, mas a implementação completa será conectada nas próximas etapas.
+                  </div>
+                </section>
+              ) : null}
             </div>
           </div>
         </div>
