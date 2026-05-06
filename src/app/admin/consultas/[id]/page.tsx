@@ -53,6 +53,7 @@ export default function AdminConsultaDetalhePage() {
   const [docImageUrl, setDocImageUrl] = useState("");
   const [receitaTexto, setReceitaTexto] = useState("");
   const [atestadoTexto, setAtestadoTexto] = useState("");
+  const [cpfPaciente, setCpfPaciente] = useState("");
 
   const headerMeta = useMemo(() => {
     if (!consulta) return "";
@@ -80,6 +81,8 @@ export default function AdminConsultaDetalhePage() {
         const medicoNome = String(json.data?.medico_nome || "").trim();
         if (medicoNome) setDocProfissional(medicoNome);
         setDocEspecialidade(String(json.data?.especialidade_agendar || "").trim());
+        const cpfNum = json.data?.cpf;
+        if (typeof cpfNum === "number" && Number.isFinite(cpfNum) && cpfNum > 0) setCpfPaciente(String(cpfNum));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar consulta");
       } finally {
@@ -92,8 +95,16 @@ export default function AdminConsultaDetalhePage() {
     };
   }, [id]);
 
+  const canGenerate = useMemo(() => {
+    const digits = String(cpfPaciente || "").replace(/\D/g, "");
+    return digits.length >= 11;
+  }, [cpfPaciente]);
+
   async function salvarDocumento(kind: "receita" | "atestado") {
-    if (!consulta?.cpf) return;
+    if (!canGenerate) {
+      setError("Preencha o CPF do paciente para gerar o documento.");
+      return;
+    }
     setSaving(true);
     setError(null);
     setInfo(null);
@@ -103,7 +114,7 @@ export default function AdminConsultaDetalhePage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          cpf: String(consulta.cpf),
+          cpf: cpfPaciente,
           profissional: docProfissional || null,
           crm: docCrm || null,
           especialidade: docEspecialidade || null,
@@ -289,6 +300,18 @@ export default function AdminConsultaDetalhePage() {
                 <div className={styles.cardH}>{activeTab === "receitas" ? "Receita" : "Atestado"}</div>
 
                 <div className={styles.formGrid}>
+                  <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
+                    <div className={styles.label}>CPF do paciente</div>
+                    <input
+                      className={styles.input}
+                      value={cpfPaciente}
+                      onChange={(e) => setCpfPaciente(e.target.value)}
+                      placeholder="Digite o CPF do paciente"
+                      inputMode="numeric"
+                    />
+                    <div className={styles.hint}>Obrigatório para gerar receita/atestado.</div>
+                  </div>
+
                   {activeTab === "receitas" ? (
                     <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
                       <div className={styles.label}>Conteúdo da receita</div>
@@ -362,11 +385,11 @@ export default function AdminConsultaDetalhePage() {
                     Voltar
                   </button>
                   {activeTab === "receitas" ? (
-                    <button className={styles.primaryBtn} type="button" onClick={() => void salvarDocumento("receita")} disabled={saving || !consulta.cpf}>
+                    <button className={styles.primaryBtn} type="button" onClick={() => void salvarDocumento("receita")} disabled={saving || !canGenerate}>
                       Gerar receita
                     </button>
                   ) : (
-                    <button className={styles.warnBtn} type="button" onClick={() => void salvarDocumento("atestado")} disabled={saving || !consulta.cpf}>
+                    <button className={styles.warnBtn} type="button" onClick={() => void salvarDocumento("atestado")} disabled={saving || !canGenerate}>
                       Gerar atestado
                     </button>
                   )}
