@@ -115,6 +115,16 @@ type Receita = {
   status: string | null;
 };
 
+type Atestado = {
+  id: number;
+  created_at: string;
+  profissional: string | null;
+  crm: string | null;
+  especialidade: string | null;
+  image_url: string | null;
+  status: string | null;
+};
+
 function fmtCpf(cpf: string) {
   const d = cpf.replace(/\D/g, "");
   if (d.length !== 11) return cpf;
@@ -157,10 +167,16 @@ export default function ReceitasPage() {
   const [tab, setTab] = useState<"Receitas" | "Atestados">("Receitas");
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [loadingRx, setLoadingRx] = useState(false);
+  const [atestados, setAtestados] = useState<Atestado[]>([]);
+  const [loadingAt, setLoadingAt] = useState(false);
 
   const [rxOpen, setRxOpen] = useState(false);
   const [rxSelected, setRxSelected] = useState<Receita | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const [atOpen, setAtOpen] = useState(false);
+  const [atSelected, setAtSelected] = useState<Atestado | null>(null);
+  const closeAtBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const [qrOpen, setQrOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -330,6 +346,28 @@ export default function ReceitasPage() {
   }, [cpf, tab]);
 
   useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!cpf || tab !== "Atestados") return;
+      setLoadingAt(true);
+      try {
+        const res = await fetch(`/api/atestados?cpf=${encodeURIComponent(cpf)}`, { cache: "no-store" });
+        const json = (await res.json()) as { data?: Atestado[]; error?: string };
+        if (!res.ok) throw new Error(json.error || "Falha ao carregar atestados");
+        if (!cancelled) setAtestados(json.data || []);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar atestados");
+      } finally {
+        if (!cancelled) setLoadingAt(false);
+      }
+    }
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [cpf, tab]);
+
+  useEffect(() => {
     if (!rxOpen) return;
     closeBtnRef.current?.focus();
 
@@ -340,13 +378,25 @@ export default function ReceitasPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [rxOpen]);
 
+  useEffect(() => {
+    if (!atOpen) return;
+    closeAtBtnRef.current?.focus();
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setAtOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [atOpen]);
+
   const rxImageUrl = rxSelected?.image_url || imgRxPlaceholder;
+  const atImageUrl = atSelected?.image_url || imgRxPlaceholder;
 
   return (
     <div className={styles.page}>
       {error ? <div className={styles.content}><div className={styles.empty}>{error}</div></div> : null}
 
-      <main className={styles.content} aria-busy={loading || loadingRx}>
+      <main className={styles.content} aria-busy={loading || loadingRx || loadingAt}>
         <section className={`${styles.card} ${styles.cardPad24Y}`}>
           <div className={styles.cardInner}>
             <div className={styles.userRow}>
@@ -442,7 +492,49 @@ export default function ReceitasPage() {
             )}
           </section>
         ) : (
-          <div className={styles.empty}>Nenhum atestado encontrado.</div>
+          <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {loadingAt ? (
+              <div className={styles.empty}>Carregando…</div>
+            ) : atestados.length ? (
+              atestados.map((a) => (
+                <div key={a.id} className={styles.rxCard}>
+                  <div className={styles.rxTopRow}>
+                    <div className={styles.rxTopLabel}>Data</div>
+                    <div className={styles.rxTopValue}>{fmtDateTimeBr(a.created_at)}</div>
+                  </div>
+
+                  <div className={styles.rxMeta}>
+                    <div className={styles.fieldRow}>
+                      <div className={styles.label10}>Profissional</div>
+                      <div className={styles.fieldValue}>{a.profissional || "-"}</div>
+                    </div>
+                    <div className={styles.fieldRow}>
+                      <div className={styles.label10}>CRM</div>
+                      <div className={styles.fieldValue}>{a.crm || "-"}</div>
+                    </div>
+                    <div className={styles.fieldRow}>
+                      <div className={styles.label10}>Especialidade</div>
+                      <div className={styles.fieldValue}>{a.especialidade || "-"}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ height: 16 }} />
+                  <button
+                    className={styles.rxButton}
+                    type="button"
+                    onClick={() => {
+                      setAtSelected(a);
+                      setAtOpen(true);
+                    }}
+                  >
+                    Ver Atestado
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className={styles.empty}>Nenhum atestado encontrado.</div>
+            )}
+          </section>
         )}
       </main>
 
@@ -469,6 +561,38 @@ export default function ReceitasPage() {
                 type="button"
                 onClick={() => {
                   downloadUrl(rxImageUrl, `receita-${rxSelected?.id ?? "arquivo"}.png`);
+                }}
+              >
+                Baixar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {atOpen ? (
+        <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Atestado" onClick={() => setAtOpen(false)}>
+          <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.dialogHeader}>
+              <div className={styles.dialogTitle}>Atestado</div>
+              <button ref={closeAtBtnRef} className={styles.iconBtn} type="button" aria-label="Fechar" onClick={() => setAtOpen(false)}>
+                ×
+              </button>
+            </div>
+
+            <div className={styles.dialogContent}>
+              <img className={styles.rxImage} src={atImageUrl} alt="Imagem do atestado" />
+            </div>
+
+            <div className={styles.dialogFooter}>
+              <button className={styles.secondaryBtn} type="button" onClick={() => {}}>
+                Renovar
+              </button>
+              <button
+                className={styles.primaryBtn}
+                type="button"
+                onClick={() => {
+                  downloadUrl(atImageUrl, `atestado-${atSelected?.id ?? "arquivo"}.png`);
                 }}
               >
                 Baixar
