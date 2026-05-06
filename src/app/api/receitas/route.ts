@@ -14,10 +14,13 @@ type ReceitaRow = {
   status: string | null;
 };
 
-function toNumericOrNull(value: string) {
-  const d = value.replace(/\D/g, "");
-  if (!d) return null;
-  const n = Number(d);
+function toDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function toNumericOrNull(digits: string) {
+  if (!digits) return null;
+  const n = Number(digits);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -42,7 +45,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ data: [] satisfies ReceitaRow[] }, { status: 200 });
   }
 
-  const cpfNum = toNumericOrNull(cpf);
+  const cpfDigits = toDigits(cpf);
+  const cpfNum = toNumericOrNull(cpfDigits);
   if (cpfNum === null) return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
 
   // A tabela `receitas` pode ainda não existir. Nesse caso, retornamos lista vazia
@@ -52,7 +56,7 @@ export async function GET(req: Request) {
   let res: any = await supabaseAdmin
     .from("receitas")
     .select("id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status")
-    .eq("cpf", cpfNum)
+    .or(`cpf.eq.${cpfDigits},cpf.eq.${cpfNum}`)
     .order("created_at", { ascending: false });
 
   if (res.error) {
@@ -65,7 +69,7 @@ export async function GET(req: Request) {
       res = await supabaseAdmin
         .from("receitas")
         .select("id,created_at,cpf,profissional,crm,especialidade,image_url,status")
-        .eq("cpf", cpfNum)
+        .or(`cpf.eq.${cpfDigits},cpf.eq.${cpfNum}`)
         .order("created_at", { ascending: false });
     }
   }
@@ -120,7 +124,8 @@ export async function POST(req: Request) {
   }
 
   if (!cpf) return NextResponse.json({ error: "cpf é obrigatório" }, { status: 400 });
-  const cpfNum = toNumericOrNull(cpf);
+  const cpfDigits = toDigits(cpf);
+  const cpfNum = toNumericOrNull(cpfDigits);
   if (cpfNum === null) return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
 
   const profissional = typeof body.profissional === "string" ? body.profissional.trim() : "";
@@ -135,7 +140,7 @@ export async function POST(req: Request) {
   let res = await supabaseAdmin
     .from("receitas")
     .insert({
-      cpf: cpfNum,
+      cpf: cpfDigits,
       profissional: profissional || null,
       crm: crm || null,
       especialidade: especialidade || null,
@@ -152,7 +157,7 @@ export async function POST(req: Request) {
       res = await supabaseAdmin
         .from("receitas")
         .insert({
-          cpf: cpfNum,
+          cpf: cpfDigits,
           profissional: profissional || null,
           crm: crm || null,
           especialidade: especialidade || null,
