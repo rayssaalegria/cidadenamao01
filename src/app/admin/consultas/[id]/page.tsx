@@ -51,6 +51,7 @@ export default function AdminConsultaDetalhePage() {
   const [docCrm, setDocCrm] = useState("");
   const [docEspecialidade, setDocEspecialidade] = useState("");
   const [docImageUrl, setDocImageUrl] = useState("");
+  const [receitaTexto, setReceitaTexto] = useState("");
 
   const headerMeta = useMemo(() => {
     if (!consulta) return "";
@@ -105,6 +106,7 @@ export default function AdminConsultaDetalhePage() {
           profissional: docProfissional || null,
           crm: docCrm || null,
           especialidade: docEspecialidade || null,
+          conteudo: kind === "receita" ? receitaTexto || null : undefined,
           imageUrl: docImageUrl || null,
           status: "Ativo",
         }),
@@ -113,10 +115,32 @@ export default function AdminConsultaDetalhePage() {
       if (!res.ok) throw new Error(json.error || "Falha ao salvar documento");
       setInfo(`${kind === "receita" ? "Receita" : "Atestado"} criado com sucesso (id: ${json.id ?? "-"})`);
       setDocImageUrl("");
+      if (kind === "receita") setReceitaTexto("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao salvar documento");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onUploadReceitaFile(file: File | null) {
+    if (!file) return;
+    if (file.size > 2_000_000) {
+      setError("Arquivo muito grande. Envie até 2MB.");
+      return;
+    }
+    setError(null);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Falha ao ler arquivo"));
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.readAsDataURL(file);
+      });
+      setDocImageUrl(dataUrl);
+      setInfo("Arquivo anexado. Agora você pode gerar a receita.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao anexar arquivo");
     }
   }
 
@@ -242,6 +266,20 @@ export default function AdminConsultaDetalhePage() {
                 <div className={styles.cardH}>{activeTab === "receitas" ? "Receita" : "Atestado"}</div>
 
                 <div className={styles.formGrid}>
+                  {activeTab === "receitas" ? (
+                    <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
+                      <div className={styles.label}>Conteúdo da receita</div>
+                      <textarea
+                        className={styles.textarea}
+                        value={receitaTexto}
+                        onChange={(e) => setReceitaTexto(e.target.value)}
+                        placeholder="Digite aqui a receita (opcional)."
+                        rows={5}
+                      />
+                      <div className={styles.hint}>Você pode preencher por texto ou anexar um arquivo/Imagem abaixo.</div>
+                    </div>
+                  ) : null}
+
                   <div className={styles.field}>
                     <div className={styles.label}>Profissional</div>
                     <input className={styles.input} value={docProfissional} onChange={(e) => setDocProfissional(e.target.value)} />
@@ -255,9 +293,20 @@ export default function AdminConsultaDetalhePage() {
                     <input className={styles.input} value={docEspecialidade} onChange={(e) => setDocEspecialidade(e.target.value)} />
                   </div>
                   <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-                    <div className={styles.label}>Imagem (URL)</div>
-                    <input className={styles.input} value={docImageUrl} onChange={(e) => setDocImageUrl(e.target.value)} placeholder="Cole a URL da imagem" />
-                    <div className={styles.hint}>Opcional, mas recomendado para anexar o documento.</div>
+                    <div className={styles.label}>{activeTab === "receitas" ? "Anexo (upload) ou URL" : "Imagem (URL)"}</div>
+                    {activeTab === "receitas" ? (
+                      <>
+                        <input
+                          className={styles.file}
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => void onUploadReceitaFile(e.target.files?.[0] || null)}
+                        />
+                        <div className={styles.hint}>Aceita imagem/PDF (até 2MB). Se preferir, cole uma URL abaixo.</div>
+                      </>
+                    ) : null}
+                    <input className={styles.input} value={docImageUrl} onChange={(e) => setDocImageUrl(e.target.value)} placeholder="Cole a URL da imagem/arquivo" />
+                    <div className={styles.hint}>Opcional. Se enviar upload, o sistema usa um anexo embutido (data URL).</div>
                   </div>
                 </div>
 

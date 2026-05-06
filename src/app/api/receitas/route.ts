@@ -10,6 +10,7 @@ type ReceitaRow = {
   crm: string | null;
   especialidade: string | null;
   image_url: string | null;
+  conteudo?: string | null;
   status: string | null;
 };
 
@@ -37,11 +38,28 @@ export async function GET(req: Request) {
 
   // A tabela `receitas` pode ainda não existir. Nesse caso, retornamos lista vazia
   // para não quebrar a UI enquanto o backend/schema é finalizado.
-  const res = await supabaseAdmin
+  // Compatibilidade: a tabela/colunas podem não existir ainda.
+  // Tentamos buscar `conteudo` quando disponível, e fazemos fallback.
+  let res: any = await supabaseAdmin
     .from("receitas")
-    .select("id,created_at,cpf,profissional,crm,especialidade,image_url,status")
+    .select("id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status")
     .eq("cpf", cpfNum)
     .order("created_at", { ascending: false });
+
+  if (res.error) {
+    const msg = String(res.error.message || "");
+    if (/relation .* does not exist/i.test(msg) || /does not exist/i.test(msg)) {
+      return NextResponse.json({ data: [] satisfies ReceitaRow[] }, { status: 200 });
+    }
+    // coluna `conteudo` pode não existir ainda
+    if (/column .*conteudo.* does not exist/i.test(msg) || /conteudo.*does not exist/i.test(msg)) {
+      res = await supabaseAdmin
+        .from("receitas")
+        .select("id,created_at,cpf,profissional,crm,especialidade,image_url,status")
+        .eq("cpf", cpfNum)
+        .order("created_at", { ascending: false });
+    }
+  }
 
   if (res.error) {
     const msg = String(res.error.message || "");
@@ -59,6 +77,7 @@ type CreateReceitaBody = {
   profissional?: string | null;
   crm?: string | null;
   especialidade?: string | null;
+  conteudo?: string | null;
   imageUrl?: string | null;
   status?: string | null;
 };
@@ -98,21 +117,43 @@ export async function POST(req: Request) {
   const profissional = typeof body.profissional === "string" ? body.profissional.trim() : "";
   const crm = typeof body.crm === "string" ? body.crm.trim() : "";
   const especialidade = typeof body.especialidade === "string" ? body.especialidade.trim() : "";
+  const conteudo = typeof body.conteudo === "string" ? body.conteudo.trim() : "";
   const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
   const status = typeof body.status === "string" ? body.status.trim() : "Ativa";
 
-  const res = await supabaseAdmin
+  // Compatibilidade: a coluna `conteudo` pode não existir ainda.
+  // Tentamos inserir com `conteudo` e fazemos fallback sem ela.
+  let res = await supabaseAdmin
     .from("receitas")
     .insert({
       cpf: cpfNum,
       profissional: profissional || null,
       crm: crm || null,
       especialidade: especialidade || null,
+      conteudo: conteudo || null,
       image_url: imageUrl || null,
       status: status || null,
     })
     .select("id")
     .single();
+
+  if (res.error) {
+    const msg = String(res.error.message || "");
+    if (/column .*conteudo.* does not exist/i.test(msg) || /conteudo.*does not exist/i.test(msg)) {
+      res = await supabaseAdmin
+        .from("receitas")
+        .insert({
+          cpf: cpfNum,
+          profissional: profissional || null,
+          crm: crm || null,
+          especialidade: especialidade || null,
+          image_url: imageUrl || null,
+          status: status || null,
+        })
+        .select("id")
+        .single();
+    }
+  }
 
   if (res.error) {
     const msg = String(res.error.message || "");

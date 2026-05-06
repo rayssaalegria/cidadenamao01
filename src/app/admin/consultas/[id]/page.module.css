@@ -210,6 +210,22 @@
   color: #0f172b;
 }
 
+.textarea {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(195, 201, 232, 0.6);
+  background: rgba(195, 201, 232, 0.2);
+  outline: none;
+  font-size: 14px;
+  color: #0f172b;
+  resize: vertical;
+}
+
+.file {
+  height: 36px;
+  padding: 6px 0;
+}
+
 .hint {
   font-size: 12px;
   color: #6c7993;
