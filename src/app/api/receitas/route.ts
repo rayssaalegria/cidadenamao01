@@ -37,7 +37,7 @@ export async function GET(req: Request) {
   const cpf = new URL(req.url).searchParams.get("cpf")?.trim() || "";
   if (!cpf) return NextResponse.json({ error: "cpf é obrigatório" }, { status: 400 });
 
-  let supabaseAdmin;
+  let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   try {
     supabaseAdmin = getSupabaseAdmin();
   } catch {
@@ -49,15 +49,42 @@ export async function GET(req: Request) {
   const cpfNum = toNumericOrNull(cpfDigits);
   if (cpfNum === null) return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
 
+  const selectWithConteudo =
+    "id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status" as const;
+  const selectNoConteudo = "id,created_at,cpf,profissional,crm,especialidade,image_url,status" as const;
+
+  async function runQuery(select: string) {
+    // 1) tenta como número (coluna numeric/bigint) — é o caso mais comum
+    const r1 = await supabaseAdmin
+      .from("receitas")
+      .select(select)
+      .eq("cpf", cpfNum)
+      .order("created_at", { ascending: false });
+    if (r1.error) return r1;
+    if ((r1.data || []).length) return r1;
+
+    // 2) tenta como string de dígitos (coluna text)
+    const r2 = await supabaseAdmin
+      .from("receitas")
+      .select(select)
+      .eq("cpf", cpfDigits)
+      .order("created_at", { ascending: false });
+    if (r2.error) return r2;
+    if ((r2.data || []).length) return r2;
+
+    // 3) tenta CPF bruto (caso esteja salvo com máscara)
+    return await supabaseAdmin
+      .from("receitas")
+      .select(select)
+      .eq("cpf", cpf)
+      .order("created_at", { ascending: false });
+  }
+
   // A tabela `receitas` pode ainda não existir. Nesse caso, retornamos lista vazia
   // para não quebrar a UI enquanto o backend/schema é finalizado.
   // Compatibilidade: a tabela/colunas podem não existir ainda.
   // Tentamos buscar `conteudo` quando disponível, e fazemos fallback.
-  let res: any = await supabaseAdmin
-    .from("receitas")
-    .select("id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status")
-    .in("cpf", [cpf, cpfDigits, cpfNum])
-    .order("created_at", { ascending: false });
+  let res: any = await runQuery(selectWithConteudo);
 
   if (res.error) {
     const msg = String(res.error.message || "");
@@ -66,11 +93,7 @@ export async function GET(req: Request) {
     }
     // coluna `conteudo` pode não existir ainda
     if (missingConteudoColumn(msg)) {
-      res = await supabaseAdmin
-        .from("receitas")
-        .select("id,created_at,cpf,profissional,crm,especialidade,image_url,status")
-        .in("cpf", [cpf, cpfDigits, cpfNum])
-        .order("created_at", { ascending: false });
+      res = await runQuery(selectNoConteudo);
     }
   }
 

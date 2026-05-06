@@ -28,7 +28,7 @@ export async function GET(req: Request) {
   const cpf = new URL(req.url).searchParams.get("cpf")?.trim() || "";
   if (!cpf) return NextResponse.json({ error: "cpf é obrigatório" }, { status: 400 });
 
-  let supabaseAdmin;
+  let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   try {
     supabaseAdmin = getSupabaseAdmin();
   } catch {
@@ -39,13 +39,37 @@ export async function GET(req: Request) {
   const cpfNum = toNumericOrNull(cpfDigits);
   if (cpfNum === null) return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
 
+  const selectWithConteudo =
+    "id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status" as const;
+  const selectNoConteudo = "id,created_at,cpf,profissional,crm,especialidade,image_url,status" as const;
+
+  async function runQuery(select: string) {
+    const r1 = await supabaseAdmin
+      .from("atestados")
+      .select(select)
+      .eq("cpf", cpfNum)
+      .order("created_at", { ascending: false });
+    if (r1.error) return r1;
+    if ((r1.data || []).length) return r1;
+
+    const r2 = await supabaseAdmin
+      .from("atestados")
+      .select(select)
+      .eq("cpf", cpfDigits)
+      .order("created_at", { ascending: false });
+    if (r2.error) return r2;
+    if ((r2.data || []).length) return r2;
+
+    return await supabaseAdmin
+      .from("atestados")
+      .select(select)
+      .eq("cpf", cpf)
+      .order("created_at", { ascending: false });
+  }
+
   // Compatibilidade: a tabela/colunas podem não existir ainda.
   // Tentamos buscar `conteudo` quando disponível, e fazemos fallback.
-  let res: any = await supabaseAdmin
-    .from("atestados")
-    .select("id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status")
-    .in("cpf", [cpf, cpfDigits, cpfNum])
-    .order("created_at", { ascending: false });
+  let res: any = await runQuery(selectWithConteudo);
 
   if (res.error) {
     const msg = String(res.error.message || "");
@@ -54,11 +78,7 @@ export async function GET(req: Request) {
     }
     // coluna `conteudo` pode não existir ainda
     if (/column .*conteudo.* does not exist/i.test(msg) || /conteudo.*does not exist/i.test(msg)) {
-      res = await supabaseAdmin
-        .from("atestados")
-        .select("id,created_at,cpf,profissional,crm,especialidade,image_url,status")
-        .in("cpf", [cpf, cpfDigits, cpfNum])
-        .order("created_at", { ascending: false });
+      res = await runQuery(selectNoConteudo);
     }
   }
 
