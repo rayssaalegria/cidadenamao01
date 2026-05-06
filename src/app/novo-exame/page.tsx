@@ -592,6 +592,7 @@ export default function AgendamentosPage() {
     if (!cpf || !fullName || !selectedEspecialidade || !selectedDate || !selectedHorario || !selectedLocal) return;
     setSaving(true);
     try {
+      const channelId = getSasiChannelIdFromClient(28135);
       const res = await fetch("/api/agendamentos", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -607,6 +608,7 @@ export default function AgendamentosPage() {
           horarioConsulta: selectedHorario,
           localConsulta: selectedLocal,
           qrCode: me?.customProps?.code || null,
+          channelId,
         }),
       });
       const json = (await res.json()) as { ok?: boolean; error?: string; row?: AgendamentoRow };
@@ -614,7 +616,6 @@ export default function AgendamentosPage() {
 
       // Monitoramento SASI: novo-exame -> SASI Mobile Messages
       const notifyTest = (process.env.NEXT_PUBLIC_SASI_NOTIFY_TEST || "").trim().toLowerCase() === "true";
-      const channelId = getSasiChannelIdFromClient(28135);
       const profileId = profileIdFromUrl || me?.id || "";
       if (profileId && json.row) {
         void fetch("/api/sasi/mobile-messages", {

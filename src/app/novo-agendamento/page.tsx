@@ -693,6 +693,7 @@ export default function NovoAgendamentoPage() {
     if (!cpf || !fullName || !especialidadeValue || !selectedDate || !selectedHorario || !localFinal) return;
     setSaving(true);
     try {
+      const channelId = getSasiChannelIdFromClient(27328);
       const res = await fetch("/api/agendamentos", {
         method: "POST",
         headers: {
@@ -714,6 +715,7 @@ export default function NovoAgendamentoPage() {
           qrCode: me?.customProps?.code || null,
           doctorId: selectedDoctorId,
           slotId: selectedSlotId,
+          channelId,
         }),
       });
       const json = (await res.json()) as { ok?: boolean; error?: string; row?: AgendamentoRow };
@@ -721,7 +723,6 @@ export default function NovoAgendamentoPage() {
 
       // Monitoramento SASI: novo-agendamento -> SASI Mobile Messages
       const notifyTest = (process.env.NEXT_PUBLIC_SASI_NOTIFY_TEST || "").trim().toLowerCase() === "true";
-      const channelId = getSasiChannelIdFromClient(27328);
       const profileId = profileIdFromUrl || me?.id || "";
       if (profileId && json.row) {
         void fetch("/api/sasi/mobile-messages", {

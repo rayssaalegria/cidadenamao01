@@ -31,6 +31,7 @@ type CreateBody = {
   qrCode?: string | null;
   doctorId?: number | null;
   slotId?: number | null;
+  channelId?: number | null;
 };
 
 type PatchBody = {
@@ -189,6 +190,7 @@ export async function POST(req: Request) {
   const carteiraSus = typeof body.carteiraSus === "string" ? body.carteiraSus.trim() : "";
   const doctorId = typeof body.doctorId === "number" && Number.isFinite(body.doctorId) ? body.doctorId : null;
   const slotId = typeof body.slotId === "number" && Number.isFinite(body.slotId) ? body.slotId : null;
+  const channelId = typeof body.channelId === "number" && Number.isFinite(body.channelId) ? body.channelId : null;
 
   if (!cpf || !nome || !especialidade || !dataConsulta || !horarioConsulta || !localConsulta) {
     return NextResponse.json(
@@ -266,9 +268,10 @@ export async function POST(req: Request) {
       medico_id: doctorId,
       medico_nome: medicoNome,
       slot_id: bookedSlot?.id || null,
+      channel_id: channelId ?? null,
     })
     .select(
-      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code,sasi_profile_id,sasi_token,medico_id,medico_nome,slot_id",
+      "id,created_at,nome_completo,cpf,carteira_sus,especialidade_agendar,data_consulta_date,horario_consulta_time,local_consulta,status,qr_code,sasi_profile_id,sasi_token,medico_id,medico_nome,slot_id,channel_id",
     )
     .single();
 
