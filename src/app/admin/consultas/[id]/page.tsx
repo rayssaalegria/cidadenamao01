@@ -28,6 +28,19 @@ function fmtCpf(n: number) {
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
+function maskCpf(value: string) {
+  const d = String(value || "").replace(/\D/g, "").slice(0, 11);
+  const p1 = d.slice(0, 3);
+  const p2 = d.slice(3, 6);
+  const p3 = d.slice(6, 9);
+  const p4 = d.slice(9, 11);
+  let out = p1;
+  if (p2) out += `.${p2}`;
+  if (p3) out += `.${p3}`;
+  if (p4) out += `-${p4}`;
+  return out;
+}
+
 function fmtDateBr(iso: string) {
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
@@ -82,7 +95,7 @@ export default function AdminConsultaDetalhePage() {
         if (medicoNome) setDocProfissional(medicoNome);
         setDocEspecialidade(String(json.data?.especialidade_agendar || "").trim());
         const cpfNum = json.data?.cpf;
-        if (typeof cpfNum === "number" && Number.isFinite(cpfNum) && cpfNum > 0) setCpfPaciente(String(cpfNum));
+        if (typeof cpfNum === "number" && Number.isFinite(cpfNum) && cpfNum > 0) setCpfPaciente(maskCpf(String(cpfNum)));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Erro ao carregar consulta");
       } finally {
@@ -305,7 +318,7 @@ export default function AdminConsultaDetalhePage() {
                     <input
                       className={styles.input}
                       value={cpfPaciente}
-                      onChange={(e) => setCpfPaciente(e.target.value)}
+                      onChange={(e) => setCpfPaciente(maskCpf(e.target.value))}
                       placeholder="Digite o CPF do paciente"
                       inputMode="numeric"
                     />
