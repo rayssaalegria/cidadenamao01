@@ -36,6 +36,11 @@ export async function GET() {
     | { ok: true; status: number; error: string }
     | { ok: false; error: string }
     | null = null;
+  let receitasFilterProbe:
+    | { ok: true; status: number; rows: unknown[] }
+    | { ok: true; status: number; error: string }
+    | { ok: false; error: string }
+    | null = null;
 
   if (supabaseUrl && serviceKey) {
     try {
@@ -83,6 +88,26 @@ export async function GET() {
     } catch (e) {
       receitasSample = { ok: false, error: e instanceof Error ? e.message : "sample_failed" };
     }
+
+    try {
+      const cpfTest = "2380098239";
+      const url = `${supabaseUrl.replace(/\/+$/, "")}/rest/v1/receitas?select=id,cpf&cpf=eq.${encodeURIComponent(
+        cpfTest
+      )}&limit=5`;
+      const r = await fetch(url, { headers: { apikey: serviceKey }, cache: "no-store" });
+      const ct = r.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const body = (await r.json()) as unknown;
+        receitasFilterProbe = Array.isArray(body)
+          ? { ok: true, status: r.status, rows: body }
+          : { ok: true, status: r.status, error: "unexpected_json" };
+      } else {
+        const text = await r.text();
+        receitasFilterProbe = { ok: true, status: r.status, error: text.slice(0, 180) };
+      }
+    } catch (e) {
+      receitasFilterProbe = { ok: false, error: e instanceof Error ? e.message : "filter_probe_failed" };
+    }
   }
 
   return NextResponse.json(
@@ -101,6 +126,7 @@ export async function GET() {
       serviceRoleKeyRole: serviceKey ? inferJwtRole(serviceKey) : null,
       restProbe,
       receitasSample,
+      receitasFilterProbe,
     },
     { status: 200 }
   );
