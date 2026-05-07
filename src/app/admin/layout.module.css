@@ -29,13 +29,33 @@
 
 .navItem {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  height: 40px;
-  padding: 0 12px;
+  justify-content: center;
+  gap: 8px;
+  min-height: 64px;
+  padding: 12px;
   border-radius: 10px;
   color: var(--ds-text-secondary);
   background: rgba(195, 201, 232, 0.12);
   border: 1px solid rgba(195, 201, 232, 0.22);
+}
+
+.navIcon {
+  width: 16px;
+  height: 16px;
+  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.navLabel {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
 }
 
 .navItem:hover {
@@ -71,8 +91,8 @@
   }
 
   .navItem {
-    height: 34px;
-    padding: 0 10px;
+    min-height: 56px;
+    padding: 10px 12px;
     font-size: 13px;
   }
 }
