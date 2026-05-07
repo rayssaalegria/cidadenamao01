@@ -292,6 +292,24 @@ export default function TelaDoMedicoPage() {
                 role="tab"
                 aria-selected={scopeTab === "future"}
               >
+                <span className={styles.tabIcon} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M7 3V5M17 3V5M4.5 9H19.5M6 4H18C19.1046 4 20 4.89543 20 6V19C20 20.1046 19.1046 21 18 21H6C4.89543 21 4 20.1046 4 19V6C4 4.89543 4.89543 4 6 4Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 12V16M12 12L15 14.2"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
                 Futuros
               </button>
               <button
@@ -301,6 +319,31 @@ export default function TelaDoMedicoPage() {
                 role="tab"
                 aria-selected={scopeTab === "history"}
               >
+                <span className={styles.tabIcon} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M3 12a9 9 0 1 0 3-6.7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M3 3v5h5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 7v6l4 2"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
                 Histórico
               </button>
             </div>

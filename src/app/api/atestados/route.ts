@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sasiFetch, type SasiMeResponse } from "@/lib/sasi";
 
 type AtestadoRow = {
@@ -33,16 +32,39 @@ function missingConteudoColumn(msg: string) {
   );
 }
 
+function getRequiredEnv(name: string) {
+  const v = process.env[name];
+  if (!v) throw new Error(`Missing environment variable: ${name}`);
+  return v;
+}
+
+function getSupabaseRest() {
+  const url = getRequiredEnv("SUPABASE_URL").replace(/\/+$/, "");
+  const key = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+  return { url, key };
+}
+
+async function supabaseRestJson<T>(path: string, init?: RequestInit) {
+  const { url, key } = getSupabaseRest();
+  const res = await fetch(`${url}${path}`, {
+    ...init,
+    headers: {
+      apikey: key,
+      "content-type": "application/json",
+      ...(init?.headers || {}),
+    },
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  const ct = res.headers.get("content-type") || "";
+  const json = ct.includes("application/json") && text ? (JSON.parse(text) as unknown) : null;
+  return { ok: res.ok, status: res.status, json, text };
+}
+
 export async function GET(req: Request) {
   const cpf = new URL(req.url).searchParams.get("cpf")?.trim() || "";
   if (!cpf) return NextResponse.json({ error: "cpf é obrigatório" }, { status: 400 });
-
-  let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
-  try {
-    supabaseAdmin = getSupabaseAdmin();
-  } catch {
-    return NextResponse.json({ data: [] satisfies AtestadoRow[] }, { status: 200 });
-  }
 
   const cpfDigits = toDigits(cpf);
   const cpfNum = toNumericOrNull(cpfDigits);
@@ -52,62 +74,36 @@ export async function GET(req: Request) {
     "id,created_at,cpf,profissional,crm,especialidade,image_url,conteudo,status" as const;
   const selectNoConteudo = "id,created_at,cpf,profissional,crm,especialidade,image_url,status" as const;
 
-  async function runQuery(select: string) {
-    const r1 = await supabaseAdmin
-      .from("atestados")
-      .select(select)
-      .eq("cpf", cpfNum)
-      .order("created_at", { ascending: false });
-    if (r1.error) return r1;
-    if ((r1.data || []).length) return r1;
+  const candidates = [String(cpfNum), cpfDigits, cpf];
 
-    const r1b = await supabaseAdmin
-      .from("atestados")
-      .select(select)
-      .eq("cpf", String(cpfNum))
-      .order("created_at", { ascending: false });
-    if (r1b.error) return r1b;
-    if ((r1b.data || []).length) return r1b;
-
-    const r2 = await supabaseAdmin
-      .from("atestados")
-      .select(select)
-      .eq("cpf", cpfDigits)
-      .order("created_at", { ascending: false });
-    if (r2.error) return r2;
-    if ((r2.data || []).length) return r2;
-
-    return await supabaseAdmin
-      .from("atestados")
-      .select(select)
-      .eq("cpf", cpf)
-      .order("created_at", { ascending: false });
+  async function list(select: string) {
+    for (const c of candidates) {
+      const { ok, status, json, text } = await supabaseRestJson<AtestadoRow[]>(
+        `/rest/v1/atestados?select=${encodeURIComponent(select)}&cpf=eq.${encodeURIComponent(c)}&order=created_at.desc`,
+        { method: "GET" }
+      );
+      if (!ok) return { ok, status, json, text };
+      if (Array.isArray(json) && json.length) return { ok, status, json, text };
+    }
+    return { ok: true, status: 200, json: [] as AtestadoRow[], text: "" };
   }
 
   // Compatibilidade: a tabela/colunas podem não existir ainda.
   // Tentamos buscar `conteudo` quando disponível, e fazemos fallback.
-  let res: any = await runQuery(selectWithConteudo);
+  let res = await list(selectWithConteudo);
+  if (!res.ok && missingConteudoColumn(String(res.text || ""))) {
+    res = await list(selectNoConteudo);
+  }
 
-  if (res.error) {
-    const msg = String(res.error.message || "");
+  if (!res.ok) {
+    const msg = String(res.text || "Erro ao carregar atestados");
     if (/relation .* does not exist/i.test(msg) || /does not exist/i.test(msg)) {
       return NextResponse.json({ data: [] satisfies AtestadoRow[] }, { status: 200 });
     }
-    // coluna `conteudo` pode não existir ainda
-    if (missingConteudoColumn(msg)) {
-      res = await runQuery(selectNoConteudo);
-    }
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  if (res.error) {
-    const msg = String(res.error.message || "");
-    if (/relation .* does not exist/i.test(msg) || /does not exist/i.test(msg)) {
-      return NextResponse.json({ data: [] satisfies AtestadoRow[] }, { status: 200 });
-    }
-    return NextResponse.json({ error: msg || "Erro ao carregar atestados" }, { status: 500 });
-  }
-
-  return NextResponse.json({ data: (res.data || []) as AtestadoRow[] }, { status: 200 });
+  return NextResponse.json({ data: (res.json || []) as AtestadoRow[] }, { status: 200 });
 }
 
 type CreateAtestadoBody = {
@@ -121,14 +117,6 @@ type CreateAtestadoBody = {
 };
 
 export async function POST(req: Request) {
-  let supabaseAdmin;
-  try {
-    supabaseAdmin = getSupabaseAdmin();
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Configuração do Supabase ausente";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-
   let body: CreateAtestadoBody;
   try {
     body = (await req.json()) as CreateAtestadoBody;
@@ -160,45 +148,40 @@ export async function POST(req: Request) {
   const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
   const status = typeof body.status === "string" ? body.status.trim() : "Ativo";
 
-  // Compatibilidade: a coluna `conteudo` pode não existir ainda.
-  // Tentamos inserir com `conteudo` e fazemos fallback sem ela.
-  let res = await supabaseAdmin
-    .from("atestados")
-    .insert({
-      cpf: cpfDigits,
-      profissional: profissional || null,
-      crm: crm || null,
-      especialidade: especialidade || null,
-      conteudo: conteudo || null,
-      image_url: imageUrl || null,
-      status: status || null,
-    })
-    .select("id")
-    .single();
+  const insertPayload = {
+    cpf: cpfDigits,
+    profissional: profissional || null,
+    crm: crm || null,
+    especialidade: especialidade || null,
+    conteudo: conteudo || null,
+    image_url: imageUrl || null,
+    status: status || null,
+  };
 
-  if (res.error) {
-    const msg = String(res.error.message || "");
-    if (missingConteudoColumn(msg)) {
-      res = await supabaseAdmin
-        .from("atestados")
-        .insert({
-          cpf: cpfDigits,
-          profissional: profissional || null,
-          crm: crm || null,
-          especialidade: especialidade || null,
-          image_url: imageUrl || null,
-          status: status || null,
-        })
-        .select("id")
-        .single();
+  let r = await supabaseRestJson<{ id: number; cpf: unknown }[]>(
+    `/rest/v1/atestados?select=id,cpf`,
+    {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify(insertPayload),
     }
+  );
+
+  if (!r.ok && missingConteudoColumn(String(r.text || ""))) {
+    const payload2 = { ...insertPayload };
+    delete (payload2 as any).conteudo;
+    r = await supabaseRestJson<{ id: number; cpf: unknown }[]>(
+      `/rest/v1/atestados?select=id,cpf`,
+      {
+        method: "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify(payload2),
+      }
+    );
   }
 
-  if (res.error) {
-    const msg = String(res.error.message || "");
-    return NextResponse.json({ error: msg || "Erro ao criar atestado" }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true, id: res.data?.id }, { status: 200 });
+  if (!r.ok) return NextResponse.json({ error: r.text || "Erro ao criar atestado" }, { status: 500 });
+  const row = Array.isArray(r.json) ? (r.json[0] as any) : null;
+  return NextResponse.json({ ok: true, id: row?.id ?? null, cpf: row?.cpf ?? null }, { status: 200 });
 }
 
