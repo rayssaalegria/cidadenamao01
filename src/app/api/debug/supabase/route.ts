@@ -27,13 +27,57 @@ export async function GET() {
   const supabaseUrl = process.env.SUPABASE_URL || "";
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
+  let restProbe:
+    | { ok: true; status: number; responseKind: "json" | "text"; rows?: number; error?: string }
+    | { ok: false; error: string }
+    | null = null;
+
+  if (supabaseUrl && serviceKey) {
+    try {
+      const url = `${supabaseUrl.replace(/\/+$/, "")}/rest/v1/receitas?select=id&limit=1`;
+      const r = await fetch(url, {
+        headers: {
+          apikey: serviceKey,
+          // IMPORTANTE: não mandar Authorization com sb_secret (não é JWT)
+          // e também não expor/registrar a key em logs.
+        },
+        cache: "no-store",
+      });
+
+      const ct = r.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const body = (await r.json()) as unknown;
+        const rows = Array.isArray(body) ? body.length : undefined;
+        restProbe = { ok: true, status: r.status, responseKind: "json", rows };
+      } else {
+        const text = await r.text();
+        restProbe = {
+          ok: true,
+          status: r.status,
+          responseKind: "text",
+          error: text.slice(0, 180),
+        };
+      }
+    } catch (e) {
+      restProbe = { ok: false, error: e instanceof Error ? e.message : "probe_failed" };
+    }
+  }
+
   return NextResponse.json(
     {
       ok: true,
       hasSupabaseUrl: Boolean(supabaseUrl),
       hasServiceRoleKey: Boolean(serviceKey),
+      serviceKeyType: serviceKey.startsWith("sb_secret_")
+        ? "sb_secret"
+        : serviceKey.startsWith("sb_publishable_")
+          ? "sb_publishable"
+          : serviceKey.includes(".")
+            ? "jwt"
+            : "unknown",
       // Não expõe chave. Apenas infere o role do payload (sem validar assinatura).
       serviceRoleKeyRole: serviceKey ? inferJwtRole(serviceKey) : null,
+      restProbe,
     },
     { status: 200 }
   );
