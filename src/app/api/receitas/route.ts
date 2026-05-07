@@ -36,6 +36,7 @@ function missingConteudoColumn(msg: string) {
 export async function GET(req: Request) {
   const cpf = new URL(req.url).searchParams.get("cpf")?.trim() || "";
   if (!cpf) return NextResponse.json({ error: "cpf é obrigatório" }, { status: 400 });
+  const debug = new URL(req.url).searchParams.get("debug") === "1";
 
   let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   try {
@@ -112,6 +113,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ data: [] satisfies ReceitaRow[] }, { status: 200 });
     }
     return NextResponse.json({ error: msg || "Erro ao carregar receitas" }, { status: 500 });
+  }
+
+  if (debug) {
+    return NextResponse.json(
+      {
+        ok: true,
+        cpfRaw: cpf,
+        cpfDigits,
+        cpfNum,
+        rows: Array.isArray(res.data) ? res.data.length : 0,
+        sample: Array.isArray(res.data) ? res.data.slice(0, 1) : [],
+      },
+      { status: 200 }
+    );
   }
 
   return NextResponse.json({ data: (res.data || []) as ReceitaRow[] }, { status: 200 });
