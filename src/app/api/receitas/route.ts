@@ -43,6 +43,9 @@ export async function GET(req: Request) {
     supabaseAdmin = getSupabaseAdmin();
   } catch {
     // Sem Supabase configurado: não quebra a tela, retorna vazio.
+    if (debug) {
+      return NextResponse.json({ ok: false, error: "supabase_admin_not_configured" }, { status: 500 });
+    }
     return NextResponse.json({ data: [] satisfies ReceitaRow[] }, { status: 200 });
   }
 
