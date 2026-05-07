@@ -63,7 +63,16 @@ export async function GET(req: Request) {
     if (r1.error) return r1;
     if ((r1.data || []).length) return r1;
 
-    // 2) tenta como string de dígitos (coluna text)
+    // 2) tenta como string do número (coluna text sem zero à esquerda)
+    const r1b = await supabaseAdmin
+      .from("receitas")
+      .select(select)
+      .eq("cpf", String(cpfNum))
+      .order("created_at", { ascending: false });
+    if (r1b.error) return r1b;
+    if ((r1b.data || []).length) return r1b;
+
+    // 3) tenta como string de dígitos (coluna text com zero à esquerda)
     const r2 = await supabaseAdmin
       .from("receitas")
       .select(select)
@@ -72,7 +81,7 @@ export async function GET(req: Request) {
     if (r2.error) return r2;
     if ((r2.data || []).length) return r2;
 
-    // 3) tenta CPF bruto (caso esteja salvo com máscara)
+    // 4) tenta CPF bruto (caso esteja salvo com máscara)
     return await supabaseAdmin
       .from("receitas")
       .select(select)
